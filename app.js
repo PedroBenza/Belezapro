@@ -50,9 +50,12 @@
           state.config.salaoId  = profile.salao_id;
           state.config.storeName = profile.nome || 'Salão';
           state.config.userRole  = profile.role;
+          // CORREÇÃO: tem de ser calculado ANTES de sincronizarConfigDoServidor(),
+          // que sobrescreve a cache local do salaoId (ver detetarTrocaDeSalao).
+          const trocouDeSalao = await detetarTrocaDeSalao(profile.salao_id);
           aplicarPermissoes(); // antes de loadState(), pela mesma razão do login
           await sincronizarConfigDoServidor(); // servidor sobrepõe plano/trial locais
-          await loadState();
+          await loadState(trocouDeSalao);
           if (navigator.onLine) {
             atualizarIndicadorSync();
           }
@@ -684,24 +687,38 @@ function toSupabaseFormat(tabela, item) {
       } catch (e) {}
       try { localStorage.removeItem('bp_' + store); } catch (e) {}
     }
-    async function loadState() {
+    // ====================================================================
+    //  DETEÇÃO DE TROCA DE SALÃO
+    //  CORREÇÃO (bug confirmado): esta verificação TEM de correr antes de
+    //  sincronizarConfigDoServidor(), porque essa função chama saveConfig(),
+    //  que sobrescreve a MESMA chave de cache 'salaoId' com o novo salão.
+    //  Se a deteção só acontecer dentro de loadState() (como antes), a cache
+    //  já foi reescrita e a comparação nunca acusa troca — os dados do salão
+    //  anterior (e a fila de sync) nunca são limpos. Por isso este helper é
+    //  chamado em checkSession()/login ANTES de sincronizarConfigDoServidor().
+    // ====================================================================
+    async function detetarTrocaDeSalao(novoSalaoId) {
+      const configs = await dbGetAll('config');
+      const salaoIdCache = configs.find(c => c.key === 'salaoId');
+      const anterior = salaoIdCache ? salaoIdCache.value : null;
+      return !!(anterior && novoSalaoId && anterior !== novoSalaoId);
+    }
+
+    async function loadState(trocouDeSalao = false) {
       const configs = await dbGetAll('config');
 
       const cfg = configs.find(c => c.key === 'storeName');
       const fund = configs.find(c => c.key === 'fundo');
       const plano = configs.find(c => c.key === 'plano');
       const trialInicio = configs.find(c => c.key === 'trialInicio');
-      const salaoIdCache = configs.find(c => c.key === 'salaoId');
       state.config.storeName = cfg ? cfg.value : 'Glamour Beauty';
       state.config.fundo = fund ? Number(fund.value) : 50000;
       state.config.plano = plano ? plano.value : 'trial';
       state.config.trialInicio = trialInicio ? trialInicio.value : null;
-      // CORREÇÃO CRÍTICA: state.config.salaoId NUNCA é sobreposto aqui — já foi
-      // definido corretamente a partir do profile.salao_id, antes de loadState()
-      // ser chamado (ver checkSession/login). Usamos o valor em cache só para
-      // detetar se este dispositivo trocou de salão entretanto.
-      const salaoIdAnterior = salaoIdCache ? salaoIdCache.value : null;
-      const trocouDeSalao = salaoIdAnterior && state.config.salaoId && salaoIdAnterior !== state.config.salaoId;
+      // state.config.salaoId NUNCA é sobreposto aqui — já foi definido
+      // corretamente a partir do profile.salao_id antes de loadState() ser
+      // chamado (ver checkSession/login). trocouDeSalao agora é recebido
+      // como parâmetro, já calculado ANTES da cache ser sobrescrita.
 
       let clientes, agendamentos, movimentos, profs, servicos;
       if (trocouDeSalao) {
@@ -739,11 +756,22 @@ function toSupabaseFormat(tabela, item) {
       const safeProfs = safe(profs);
       const safeServicos = safe(servicos);
 
+      // CORREÇÃO (causa-raiz do 403 em profissionais/serviços): PROF_DEFAULT
+      // e SERVICOS_DEFAULT em core-constants.js têm IDs fixos, iguais para
+      // TODOS os salões. O primeiro salão a sincronizar "ganha" essas linhas
+      // no Supabase; qualquer salão seguinte tenta um upsert com o mesmo id
+      // e salao_id diferente — a RLS bloqueia (403), porque a linha já
+      // pertence a outro salão. Geramos um id novo por salão aqui, uma única
+      // vez, e usamos o MESMO valor tanto no state em memória como no que é
+      // gravado/sincronizado — nunca os IDs fixos da constante diretamente.
+      const profsPadraoComIdProprio = PROF_DEFAULT.map(p => ({ ...p, id: uuid() }));
+      const servicosPadraoComIdProprio = SERVICOS_DEFAULT.map(s => ({ ...s, id: uuid() }));
+
       state.clientes = safeClientes;
       state.agendamentos = safeAgendamentos;
       state.movimentos = safeMovimentos;
-      state.profissionais = safeProfs.length ? safeProfs : [...PROF_DEFAULT];
-      state.servicos = safeServicos.length ? safeServicos : [...SERVICOS_DEFAULT];
+      state.profissionais = safeProfs.length ? safeProfs : profsPadraoComIdProprio;
+      state.servicos = safeServicos.length ? safeServicos : servicosPadraoComIdProprio;
 
       const chartPeriodo = localStorage.getItem('bp_chart_periodo') || 'semana';
       const chartOffset = parseInt(localStorage.getItem('bp_chart_offset')) || 0;
@@ -760,8 +788,8 @@ function toSupabaseFormat(tabela, item) {
         await dbPut('config', { id: 'trialInicio', key: 'trialInicio', value: state.config.trialInicio });
         await dbPut('config', { id: 'plano', key: 'plano', value: 'trial' });
       }
-      if (safeProfs.length === 0) { for (const p of PROF_DEFAULT) await dbPut('profissionais', p); }
-      if (safeServicos.length === 0) { for (const s of SERVICOS_DEFAULT) await dbPut('servicos', s); }
+      if (safeProfs.length === 0) { for (const p of profsPadraoComIdProprio) await dbPut('profissionais', p); }
+      if (safeServicos.length === 0) { for (const s of servicosPadraoComIdProprio) await dbPut('servicos', s); }
 
       if (state.config.salaoId && navigator.onLine) {
         await garantirSalaoRemoto();
@@ -1028,6 +1056,9 @@ function toSupabaseFormat(tabela, item) {
       const storeDisplay = document.getElementById('store-name-display');
       if (storeDisplay && state.config.storeName) {
         storeDisplay.textContent = state.config.storeName;
+        // Diagnóstico: salao_id ativo visível no title (hover/long-press),
+        // sem alterar o layout. Facilita confirmar qual salão está carregado.
+        storeDisplay.title = 'Duplo clique para gerir profissionais — salao_id: ' + (state.config.salaoId || '(nenhum)');
       }
     }
 
@@ -2144,12 +2175,15 @@ function toSupabaseFormat(tabela, item) {
         state.config.salaoId   = profile.salao_id;
         state.config.storeName = profile.nome || 'Salão';
         state.config.userRole  = profile.role;
+        // CORREÇÃO: tem de ser calculado ANTES de sincronizarConfigDoServidor(),
+        // que sobrescreve a cache local do salaoId (ver detetarTrocaDeSalao).
+        const trocouDeSalao = await detetarTrocaDeSalao(profile.salao_id);
         // Aplica o papel ANTES de loadState()/updateUI() gerarem a interface,
         // para que nenhum elemento restrito seja pintado mesmo momentaneamente
         // (critério de aceitação da secção 4/9 do item 1.1 da Especificação).
         aplicarPermissoes();
         await sincronizarConfigDoServidor(); // servidor sobrepõe plano/trial locais
-        await loadState();
+        await loadState(trocouDeSalao);
         if (navigator.onLine) {
           atualizarIndicadorSync();
         }
