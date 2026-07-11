@@ -8,7 +8,7 @@
 // service worker não mexe nisso, só garante que o ficheiro da app em si
 // carrega offline.
 
-const CACHE_NAME = 'belezapro-shell-v3';
+const CACHE_NAME = 'belezapro-shell-v4';
 
 const APP_SHELL = [
   './',
@@ -16,6 +16,11 @@ const APP_SHELL = [
   './style.css',
   './core-constants.js',
   './core-utils.js',
+  './core-state.js',
+  './db-indexeddb.js',
+  './auth-supabase.js',
+  './sync-queue.js',
+  './sync-rest.js',
   './app.js',
   './main.js',
   './manifest.json',
