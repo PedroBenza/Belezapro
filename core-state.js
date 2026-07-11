@@ -17,4 +17,7 @@ let state = {
   chartMostrarValores: false,
 };
 
-let activeTab = 'dashboard';
+// ✅ Ponto 4 — restaura a última aba visitada neste dispositivo; a troca
+// visual (classes .active nos tab-pane/nav-item) é reaplicada em app.js
+// depois do primeiro loadState(), ver ativarAbaAtiva().
+let activeTab = localStorage.getItem('bp_active_tab') || 'dashboard';

@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', async function init() {
   document.getElementById('login-view').style.display = 'flex';
   document.getElementById('app-view').style.display = 'none';
 
+  // ✅ Ponto 1 — indicador Online/Offline atualizado já aqui, ANTES de
+  // qualquer chamada de rede (openDB/checkSession). atualizarIndicadorSync()
+  // só depende de navigator.onLine (instantâneo) e da fila local em
+  // localStorage (instantâneo) — não precisa de sessão nem de perfil.
+  // O HTML tem "Offline" fixo por defeito (index.html), por isso sem esta
+  // chamada antecipada o texto ficava errado durante todo o checkSession().
+  if (typeof atualizarIndicadorSync === 'function') atualizarIndicadorSync();
+
   // Abrir IndexedDB local (offline-first)
   // Item 2.4: qualquer falha aqui é comunicada de forma clara — nunca
   // silenciosa — e nunca deixa o utilizador perante um ecrã sem saída.
@@ -78,6 +86,15 @@ document.addEventListener('DOMContentLoaded', async function init() {
   setTimeout(aplicarAcessibilidade, 600);
 
   console.log('✅ BelezaPro inicializado com sucesso!');
+
+  // ✅ Ponto 2 — Sincronização periódica a cada 30 segundos
+  setInterval(() => {
+    if (navigator.onLine && document.visibilityState === 'visible' && state?.config?.salaoId) {
+      carregarDoSupabase().then(atualizado => {
+        if (atualizado) updateUI();
+      }).catch(() => {});
+    }
+  }, 30000);
 });
 
 // PWA: registar o service worker (cache do app shell para offline real)

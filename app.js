@@ -659,7 +659,11 @@
         cont.innerHTML = `<div class="empty-state">${svgPessoas}<p>Adicione o primeiro profissional</p></div>`;
         return;
       }
-      cont.innerHTML = state.profissionais.map(p => `
+      // ✅ Ponto 5 — ordena por nome; garante a mesma ordem em qualquer
+      // dispositivo, independentemente da ordem em que os dados chegaram
+      // (local vs. merge com o Supabase).
+      const profissionaisOrdenados = [...state.profissionais].sort((a, b) => a.nome.localeCompare(b.nome));
+      cont.innerHTML = profissionaisOrdenados.map(p => `
         <div class="prof-card">
           <div class="prof-avatar">${p.nome.charAt(0).toUpperCase()}</div>
           <div style="flex:1;min-width:0;">
@@ -685,7 +689,9 @@
         container.innerHTML = `<div class="empty-state">${svgTesoura}<p>Nenhum serviço cadastrado</p></div>`;
         return;
       }
-      container.innerHTML = state.servicos.map(s => {
+      // ✅ Ponto 5 — mesma razão de renderProfissionais() acima.
+      const servicosOrdenados = [...state.servicos].sort((a, b) => a.nome.localeCompare(b.nome));
+      container.innerHTML = servicosOrdenados.map(s => {
         const profs = s.profissionais && s.profissionais.length > 0 ? s.profissionais.join(', ') : 'Todos os profissionais disponíveis';
         return `
           <div class="list-item" style="cursor:default;">
@@ -1420,6 +1426,8 @@
           }
         }
         activeTab = tab;
+        // ✅ Ponto 4 — persistir a aba para restaurar após recarregar
+        localStorage.setItem('bp_active_tab', tab);
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
         document.getElementById('tab-' + tab).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1447,6 +1455,32 @@
         aplicarPermissoes();
       });
     });
+
+    // ====================================================================
+    //  ✅ Ponto 4 (correção adicional) — a restauração de `activeTab` do
+    //  localStorage (core-state.js) só corrige QUE DADOS são renderizados
+    //  em updateUI(); não move sozinha as classes CSS que decidem QUAL aba
+    //  está visível (isso só acontecia dentro do clique do menu, linha
+    //  acima). Sem isto, ao recarregar na aba "Caixa" os dados da Caixa
+    //  ficavam corretos por baixo, mas o ecrã continuava a mostrar o
+    //  Dashboard (único tab-pane com "active" fixo no index.html).
+    //  Chamada uma vez em checkSession()/login, depois de loadState().
+    // ====================================================================
+    function ativarAbaAtiva() {
+      const pane = document.getElementById('tab-' + activeTab);
+      if (!pane) return; // aba desconhecida/removida: mantém o que já está
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      pane.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => {
+        n.classList.remove('active');
+        n.setAttribute('aria-selected', 'false');
+      });
+      const navBtn = document.querySelector('.nav-item[data-tab="' + activeTab + '"]');
+      if (navBtn) {
+        navBtn.classList.add('active');
+        navBtn.setAttribute('aria-selected', 'true');
+      }
+    }
 
     // ====================================================================
     //  RBAC — CONTROLO DE PERMISSÕES

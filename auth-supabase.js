@@ -53,12 +53,26 @@ async function checkSession() {
       aplicarPermissoes(); // antes de loadState(), pela mesma razão do login
       await sincronizarConfigDoServidor(); // servidor sobrepõe plano/trial locais
       await loadState(trocouDeSalao);
+      // ✅ Ponto 4 — reaplica visualmente a aba restaurada (ver ativarAbaAtiva
+      // em app.js); tem de correr ANTES do aplicarPermissoes() seguinte, para
+      // a defesa-em-profundidade dele (redireciona se "equipa" não for
+      // permitido) inspecionar o estado já correto do tab-pane activo.
+      if (typeof ativarAbaAtiva === 'function') ativarAbaAtiva();
       if (navigator.onLine) {
         atualizarIndicadorSync();
       }
       toast('Sessão restaurada. Bem-vindo(a)!', 'success');
       if (typeof carregarHistoricoIA === 'function') carregarHistoricoIA();
       aplicarPermissoes(); // reaplica por defesa após updateUI regenerar a DOM
+      // ✅ Ponto 3 — antes só existia no handler do botão "Entrar"; uma
+      // sessão restaurada automaticamente (o caso mais comum com 2+
+      // dispositivos na mesma conta) nunca passava por ali, por isso o
+      // onboarding nunca era mostrado nesse caminho, independentemente do
+      // que estivesse em localStorage.
+      if (!localStorage.getItem('bp_onboarding_seen')) {
+        document.getElementById('onboarding-screen').style.display = 'flex';
+        if (typeof showOnboardingSlide === 'function') showOnboardingSlide(0);
+      }
     }
   } catch (err) {
     console.error('Erro na verificação de sessão:', err);
@@ -208,6 +222,9 @@ document.getElementById('login-btn').addEventListener('click', async function() 
     aplicarPermissoes();
     await sincronizarConfigDoServidor(); // servidor sobrepõe plano/trial locais
     await loadState(trocouDeSalao);
+    // ✅ Ponto 4 — mesmo aqui: se este dispositivo já tinha uma aba diferente
+    // de "dashboard" guardada de uma sessão anterior, reaplica-a visualmente.
+    if (typeof ativarAbaAtiva === 'function') ativarAbaAtiva();
     if (navigator.onLine) {
       atualizarIndicadorSync();
     }
