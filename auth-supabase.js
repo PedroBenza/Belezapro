@@ -70,6 +70,12 @@ async function checkSession() {
       // onboarding nunca era mostrado nesse caminho, independentemente do
       // que estivesse em localStorage.
       if (!localStorage.getItem('bp_onboarding_seen')) {
+        // CORREÇÃO: splash-screen tem z-index maior (9999) que onboarding-screen
+        // (9998) e só se esconde sozinho 1100ms após o carregamento da página
+        // (main.js). Sem isto, se este ponto for alcançado antes desse tempo,
+        // o onboarding fica visualmente tapado pelo splash, mesmo com o
+        // display:flex aplicado corretamente.
+        if (typeof hideSplash === 'function') hideSplash();
         document.getElementById('onboarding-screen').style.display = 'flex';
         if (typeof showOnboardingSlide === 'function') showOnboardingSlide(0);
       }
@@ -237,6 +243,12 @@ document.getElementById('login-btn').addEventListener('click', async function() 
     aplicarPermissoes();
     // Onboarding (Fase 2)
     if (!localStorage.getItem('bp_onboarding_seen')) {
+      // CORREÇÃO: mesma razão do checkSession() acima — o login manual é
+      // mais rápido do que a restauração automática de sessão, por isso é
+      // o caminho onde é mais provável ainda faltar tempo para os 1100ms
+      // do splash (main.js) terem passado. Sem forçar aqui, o onboarding
+      // fica tapado pelo splash (z-index 9999 > 9998) e parece "não aparecer".
+      if (typeof hideSplash === 'function') hideSplash();
       document.getElementById('onboarding-screen').style.display = 'flex';
       showOnboardingSlide(0);
     }
