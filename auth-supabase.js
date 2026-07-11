@@ -76,7 +76,15 @@ async function checkSession() {
         // o onboarding fica visualmente tapado pelo splash, mesmo com o
         // display:flex aplicado corretamente.
         if (typeof hideSplash === 'function') hideSplash();
-        document.getElementById('onboarding-screen').style.display = 'flex';
+        const onbEl = document.getElementById('onboarding-screen');
+        onbEl.style.display = 'flex';
+        // CORREÇÃO 2: bloqueia toques nos primeiros 500ms — em ecrãs táteis,
+        // o toque que originou este fluxo pode gerar um "clique fantasma"
+        // atrasado exatamente neste ponto do ecrã; sem isto, esse clique
+        // fantasma pode cair em cima do botão "Saltar"/"Começar agora" e
+        // fechar o onboarding sozinho, no mesmo instante em que abre.
+        onbEl.style.pointerEvents = 'none';
+        setTimeout(() => { onbEl.style.pointerEvents = 'auto'; }, 500);
         if (typeof showOnboardingSlide === 'function') showOnboardingSlide(0);
       }
     }
@@ -249,7 +257,12 @@ document.getElementById('login-btn').addEventListener('click', async function() 
       // do splash (main.js) terem passado. Sem forçar aqui, o onboarding
       // fica tapado pelo splash (z-index 9999 > 9998) e parece "não aparecer".
       if (typeof hideSplash === 'function') hideSplash();
-      document.getElementById('onboarding-screen').style.display = 'flex';
+      const onbEl = document.getElementById('onboarding-screen');
+      onbEl.style.display = 'flex';
+      // CORREÇÃO 2 — ver nota igual em checkSession(): bloqueia o clique
+      // fantasma que o próprio toque em "Entrar" pode gerar com atraso.
+      onbEl.style.pointerEvents = 'none';
+      setTimeout(() => { onbEl.style.pointerEvents = 'auto'; }, 500);
       showOnboardingSlide(0);
     }
     aplicarAcessibilidade();
