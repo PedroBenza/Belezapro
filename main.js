@@ -95,6 +95,24 @@ document.addEventListener('DOMContentLoaded', async function init() {
       }).catch(() => {});
     }
   }, 30000);
+
+  // ✅ Passo 1 (revisão) — FAB encolhe/esmaece durante scroll ativo, para
+  // nunca bloquear de forma permanente um botão de ação (Ajustar/Excluir)
+  // de uma linha que passe por baixo dele. Volta ao normal 250ms depois
+  // do scroll parar. addEventListener com { passive: true } — só lê a
+  // posição de scroll, nunca a bloqueia, sem custo de performance.
+  const mainContent = document.querySelector('.main-content');
+  const fabEl = document.getElementById('fab-agendar');
+  if (mainContent && fabEl) {
+    let fabScrollTimeout = null;
+    mainContent.addEventListener('scroll', () => {
+      fabEl.classList.add('fab-scrolling');
+      clearTimeout(fabScrollTimeout);
+      fabScrollTimeout = setTimeout(() => {
+        fabEl.classList.remove('fab-scrolling');
+      }, 250);
+    }, { passive: true });
+  }
 });
 
 // PWA: registar o service worker (cache do app shell para offline real)

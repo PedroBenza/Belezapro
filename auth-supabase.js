@@ -199,11 +199,17 @@ document.getElementById('login-btn').addEventListener('click', async function() 
     if (!localStorage.getItem('bp_onboarding_seen')) {
       const splash = document.getElementById('splash-screen');
       if (splash) { splash.style.display = 'none'; }
-      setTimeout(() => {
-        const onbEl = document.getElementById('onboarding-screen');
-        onbEl.style.display = 'flex';
-        showOnboardingSlide(0);
-      }, 50);
+      const onbEl = document.getElementById('onboarding-screen');
+      onbEl.style.display = 'flex';
+      // Bloqueia toques nos primeiros 500ms: em ecrãs táteis, o toque que
+      // originou o login pode gerar um "clique fantasma" atrasado (até
+      // ~300ms no Android) exatamente neste ponto do ecrã — sem isto, esse
+      // clique pode cair em cima do botão "Saltar"/"Começar agora" e fechar
+      // o onboarding sozinho, no mesmo instante em que abre. 50ms sozinho
+      // não cobre essa janela.
+      onbEl.style.pointerEvents = 'none';
+      setTimeout(() => { onbEl.style.pointerEvents = 'auto'; }, 500);
+      showOnboardingSlide(0);
     }
     aplicarAcessibilidade();
   } catch (err) {

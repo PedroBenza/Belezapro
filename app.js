@@ -701,8 +701,8 @@
               <div class="sub">${fmtKz(s.precoBase)} · 👤 ${escHtml(profs)}</div>
             </div>
             <div class="actions">
-              <button class="btn btn-sm btn-secondary" data-id="${s.id}" data-action="edit-servico" data-role="admin">✏️</button>
-              <button class="btn btn-sm btn-danger" data-id="${s.id}" data-action="del-servico" data-role="admin">✕</button>
+              <button class="btn btn-sm btn-secondary" data-id="${s.id}" data-action="edit-servico" data-role="admin" style="padding:4px 12px;font-size:.7rem;">Ajustar</button>
+              <button class="btn btn-sm btn-danger" data-id="${s.id}" data-action="del-servico" data-role="admin" style="padding:4px 12px;font-size:.7rem;">Excluir</button>
             </div>
           </div>
         `;

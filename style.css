@@ -22,10 +22,12 @@
       --border-ink: #2A241E;
       --shadow-premium: 0 1px 0 rgba(20,17,15,.06);
       --shadow-strong: 0 2px 12px rgba(20,17,15,.10);
-      --radius-lg: 6px;
-      --radius-md: 4px;
-      --radius-sm: 3px;
-      --radius-full: 4px;
+      /* --radius-sm/md/lg/full removidos daqui (Fase 2, passo 2): esta
+         definição era completamente sobreposta pelo segundo bloco :root
+         (~linha 1310), tornando-a código morto e confuso — duas fontes de
+         verdade diferentes para as mesmas variáveis. A definição oficial
+         de radius vive agora só no segundo bloco, ajustada para "reto"
+         (3-6px), conforme decisão confirmada no Plano Mãe. */
       --transition: all 0.16s cubic-bezier(0.16,1,0.3,1);
       --font-serif: 'Inter', -apple-system, system-ui, sans-serif;
       --font-sans: 'Inter', -apple-system, system-ui, sans-serif;
@@ -240,9 +242,15 @@
     }
     .app-header .logo span { color: var(--text-primary); }
     .app-header .store-name {
+      /* CORREÇÃO: a versão anterior (.78rem + peso 700) alargou a linha o
+         suficiente para "PREMIUM" colidir com o .header-actions (que está
+         em position:absolute, por isso não quebra linha, sobrepõe). Volto
+         ao tamanho original (.6rem, já confirmado sem colisão) e mantenho
+         só peso mais forte + cor mais escura — isso reforça o destaque
+         sem alargar a caixa de texto. */
       font-size: .6rem;
-      font-weight: 600;
-      color: var(--text-secondary);
+      font-weight: 700;
+      color: var(--text-primary);
       text-transform: uppercase;
       letter-spacing: .04em;
       cursor: pointer;
@@ -780,6 +788,17 @@
       z-index: 400;
       touch-action: manipulation;
     }
+    /* Passo 1 (revisão): o padding extra do .main-content só resolve o
+       fim da lista. O FAB continua fixo em cima de qualquer linha que
+       passe por baixo dele durante o scroll (ex.: botão "Excluir" de
+       uma linha do meio). Em vez de mover o FAB (só desloca o problema
+       para outro botão), ele encolhe/esmaece durante o scroll ativo —
+       ação de main.js/app.js, ver 'fab-scrolling'. */
+    .fab.fab-scrolling {
+      opacity: .35;
+      transform: scale(.8);
+      pointer-events: none;
+    }
     .fab::before {
       content: '';
       position: absolute;
@@ -1311,13 +1330,15 @@
       --space-24: 96px;
 
       --radius-none: 0px;
-      --radius-xs:   4px;
-      --radius-sm:   8px;
-      --radius-md:   12px;
-      --radius-lg:   16px;
-      --radius-xl:   20px;
-      --radius-2xl:  24px;
-      --radius-3xl:  32px;
+      --radius-xs:   3px;
+      --radius-sm:   4px;
+      --radius-md:   6px;
+      --radius-lg:   6px;
+      --radius-xl:   6px;
+      --radius-2xl:  6px;
+      --radius-3xl:  6px;
+      /* --radius-full mantido em 9999px: é usado só pelos botões pill
+         (.btn), uma decisão à parte, sempre correta nos screenshots. */
       --radius-full: 9999px;
 
       --elevation-0: none;
