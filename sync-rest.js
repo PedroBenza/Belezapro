@@ -197,6 +197,27 @@ function toSupabaseFormat(tabela, item) {
           const resultado = [];
           const itensParaSync = [];
 
+          // F1.2.c (real, corrigido em 12/07/2026): sem timestamp por campo,
+          // não é possível saber qual campo individual é "mais recente" —
+          // só sabemos qual REGISTO inteiro é mais recente (updated_at).
+          // Estratégia: usar o registo mais recente como base e preencher,
+          // campo a campo, qualquer valor null/undefined nele com o valor
+          // do registo mais antigo. Isto evita o cenário concreto de perda
+          // de dados do merge anterior: dispositivo A edita só o telefone
+          // (offline), dispositivo B edita só as notas (online); com o
+          // merge antigo (objeto inteiro), um dos dois campos era sempre
+          // perdido. Com isto, ambos sobrevivem desde que o campo mudado
+          // não fique null/undefined no lado vencedor.
+          const mergeCampoACampo = (maisRecente, maisAntigo) => {
+            const merged = { ...maisRecente };
+            for (const campo in maisAntigo) {
+              if (merged[campo] === undefined || merged[campo] === null) {
+                merged[campo] = maisAntigo[campo];
+              }
+            }
+            return merged;
+          };
+
           for (const remoto of itensRemotos) {
             const local = mapLocal.get(remoto.id);
             if (!local) {
@@ -205,10 +226,15 @@ function toSupabaseFormat(tabela, item) {
               const localTs = local.updated_at || '1970-01-01T00:00:00.000Z';
               const remotoTs = remoto.updated_at || '1970-01-01T00:00:00.000Z';
               if (remotoTs > localTs) {
-                resultado.push(remoto);
+                const merged = mergeCampoACampo(remoto, local);
+                resultado.push(merged);
+                // Só volta a sincronizar se o merge trouxe algo do local
+                // que o remoto não tinha (senão seria upload desnecessário).
+                if (JSON.stringify(merged) !== JSON.stringify(remoto)) itensParaSync.push(merged);
               } else if (localTs > remotoTs) {
-                resultado.push(local);
-                itensParaSync.push(local);
+                const merged = mergeCampoACampo(local, remoto);
+                resultado.push(merged);
+                itensParaSync.push(merged);
               } else {
                 resultado.push(local);
               }
