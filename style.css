@@ -201,11 +201,19 @@
     }
     .input-field:focus {
       background: var(--card-white);
+      /* CORREÇÃO DEFINITIVA (Fase 2): a causa real do "anel duplo" não era
+         o box-shadow — era esta regra a competir com a de acessibilidade
+         "FOCUS VISIBLE" (mais abaixo no ficheiro, *:focus-visible), que
+         desenha um outline 2px + offset 2px, sempre com !important. Dois
+         sistemas diferentes (borda+sombra aqui, outline lá) a desenhar
+         dois aroas ao mesmo tempo. Agora usa exatamente o mesmo outline,
+         não uma técnica diferente — quando a de acessibilidade dispara por
+         cima (!important), fica um único aro, nunca dois.
+         Não removi a regra de acessibilidade: é a que garante o foco
+         visível à navegação por teclado, tem de ficar. */
       border-color: var(--gold);
-      /* CORREÇÃO (Fase 2): antes "0 0 0 4px" tinha blur:0 — um segundo anel
-         sólido a duplicar a borda, não um brilho. Com blur real (8px) e
-         spread menor (2px), fica um halo suave único em vez de duas linhas. */
-      box-shadow: 0 0 8px 2px rgba(212, 175, 55, .18);
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
     }
     .input-field::placeholder { color: var(--text-muted); }
     select.input-field {
