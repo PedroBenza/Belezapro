@@ -398,7 +398,6 @@
       populateVendaSelects();
       populateAgendaSelects();
       setupPrecoAutomatico('agenda-servico', 'agenda-preco');
-      if (typeof atualizarVisibilidadeFab === 'function') atualizarVisibilidadeFab();
       setupPrecoAutomatico('ci-servico-sel', 'ci-valor');
       initChartControls();
       // Acessibilidade
@@ -411,6 +410,28 @@
         // Diagnóstico: salao_id ativo visível no title (hover/long-press),
         // sem alterar o layout. Facilita confirmar qual salão está carregado.
         storeDisplay.title = 'Duplo clique para gerir profissionais — salao_id: ' + (state.config.salaoId || '(nenhum)');
+      }
+
+      // ORDEM DIRETA: FAB visível só nas duas primeiras abas (Resumo, Agenda).
+      atualizarVisibilidadeAtalhos();
+    }
+
+    // Função partilhada (ver updateUI() e o clique de .nav-item mais abaixo)
+    // — extraída para evitar exatamente o tipo de divergência que aconteceu
+    // da primeira vez: a lógica só estava dentro de updateUI(), que o clique
+    // no menu NÃO chama (tem a sua própria renderização direta), por isso
+    // o FAB não escondia/mostrava ao trocar de aba pelo menu.
+    function atualizarVisibilidadeAtalhos() {
+      const fabEl = document.getElementById('fab-agendar');
+      if (fabEl) {
+        fabEl.style.display = (activeTab === 'dashboard' || activeTab === 'agenda') ? 'flex' : 'none';
+      }
+      // ORDEM DIRETA: banner "Registar Venda" só faz sentido como atalho
+      // principal em Resumo e Caixa — nas outras abas (Clientes, Equipa, IA)
+      // era repetido com o mesmo peso visual sem ser a ação relevante ali.
+      const bannerEl = document.getElementById('nova-venda-hero-btn');
+      if (bannerEl) {
+        bannerEl.style.display = (activeTab === 'dashboard' || activeTab === 'caixa') ? 'flex' : 'none';
       }
     }
 
@@ -425,11 +446,11 @@
       if (plano === 'trial' && isTrialAtivo()) {
         const dias = getDiasTrialRestantes();
         countdown.style.display = 'inline-block';
-        countdown.innerHTML = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Restam ${dias} dias`;
+        countdown.textContent = `⏳ Restam ${dias} dias`;
         countdown.style.color = '';
       } else if (plano === 'trial' && !isTrialAtivo()) {
         countdown.style.display = 'inline-block';
-        countdown.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Trial expirado';
+        countdown.textContent = '⚠️ Trial expirado';
         countdown.style.color = '#B33A4A';
       } else {
         countdown.style.display = 'none';
@@ -465,17 +486,17 @@
       const cont = document.getElementById('agenda-today-list');
       if (proximos.length === 0) {
         cont.innerHTML =
-          `<div class="empty-state"><p>${agHoje.length === 0 ? 'Nenhum atendimento hoje' : 'Todos os atendimentos realizados <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'}</p></div>`;
+          `<div class="empty-state"><p>${agHoje.length === 0 ? 'Nenhum atendimento hoje' : 'Todos os atendimentos realizados ✅'}</p></div>`;
       } else {
         cont.innerHTML = proximos.map(a => `
           <div class="list-item">
             <div class="avatar">${a.cliente.charAt(0).toUpperCase()}</div>
             <div class="info">
               <div class="title" style="color:var(--gold-dark);font-weight:700;">${escHtml(a.servico)}</div>
-              <div class="sub"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="8" r="4"/><path d="M5.3 18.3C6.8 16.5 9.2 15 12 15s5.2 1.5 6.7 3.3"/></svg> ${escHtml(a.cliente)} · ${a.hora} · ${escHtml(a.profissional)}</div>
+              <div class="sub">👤 ${escHtml(a.cliente)} · ${a.hora} · ${escHtml(a.profissional)}</div>
             </div>
             <div class="action" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-              <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 10px;border-radius:4px;font-size:.6rem;font-weight:700;background:#FEF6E0;color:#A7872B;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Pendente</span>
+              <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 10px;border-radius:4px;font-size:.6rem;font-weight:700;background:#FEF6E0;color:#A7872B;">⏳ Pendente</span>
               <span style="font-weight:700;font-size:.8rem;">${fmtKz(a.preco)}</span>
             </div>
           </div>
@@ -483,7 +504,7 @@
       }
       document.getElementById('agenda-count').textContent = proximos.length + ' pendentes';
 
-      document.getElementById('today-date').innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>' + new Date().toLocaleDateString('pt-AO', { day: '2-digit',
+      document.getElementById('today-date').textContent = '📅 ' + new Date().toLocaleDateString('pt-AO', { day: '2-digit',
         month: 'long', year: 'numeric' });
       const h = new Date().getHours();
       document.getElementById('greeting').textContent = h < 12 ? 'Bom dia ☀️' : h < 18 ? 'Boa tarde 🌤️' : 'Boa noite 🌙';
@@ -515,13 +536,13 @@
             <div class="time">${a.hora}</div>
             <div class="event">
               <div class="service">${escHtml(a.servico)}</div>
-              <div class="client"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="8" r="4"/><path d="M5.3 18.3C6.8 16.5 9.2 15 12 15s5.2 1.5 6.7 3.3"/></svg> ${escHtml(a.cliente)}</div>
+              <div class="client">👤 ${escHtml(a.cliente)}</div>
               <div class="meta">
-                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="8" r="2.5"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M19 19c0-2.2-1.3-4-3-5"/></svg> ${escHtml(a.profissional)}</span>
+                <span>👤 ${escHtml(a.profissional)}</span>
                 <span class="pill" style="font-weight:700;">${fmtKz(a.preco)}</span>
-                <span class="pill ${isRealizado ? 'gray' : 'green'}">${isRealizado ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Realizado' : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Agendado'}</span>
-                ${!isRealizado ? `<button class="btn btn-sm btn-success" data-id="${a.id}" data-action="finalizar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Finalizar</button>` : ''}
-                ${!isRealizado ? `<button class="btn btn-sm btn-danger" data-id="${a.id}" data-action="cancelar-agenda" data-role="admin,gerente" style="padding:4px 12px;font-size:.7rem;">Cancelar</button>` : ''}
+                <span class="pill ${isRealizado ? 'gray' : 'green'}">${isRealizado ? '✅ Realizado' : '📅 Agendado'}</span>
+                ${!isRealizado ? `<button class="btn btn-sm btn-success" data-id="${a.id}" data-action="finalizar">✅ Finalizar</button>` : ''}
+                ${!isRealizado ? `<button class="btn btn-sm btn-secondary" data-id="${a.id}" data-action="cancelar-agenda" data-role="admin,gerente" style="padding:4px 12px;font-size:.7rem;color:var(--text-muted);" aria-label="Cancelar agendamento">✕</button>` : ''}
               </div>
             </div>
           </div>
@@ -572,16 +593,13 @@
               <div class="sub">${escHtml(c.telefone || '')}${c.notas ? ' · ' + escHtml(c.notas) : ''} · ${freq} visitas</div>
             </div>
             <div class="actions">
-              <button class="btn btn-sm btn-secondary" data-id="${c.id}" data-action="edit-c" data-role="admin,gerente,operador" style="padding:4px 12px;font-size:.7rem;">Ajustar perfil</button>
-              <button class="btn btn-sm btn-danger" data-id="${c.id}" data-action="del-cliente" data-role="admin,gerente" style="padding:4px 12px;font-size:.7rem;">Excluir</button>
+              <button class="row-menu-btn" data-action="row-menu" data-tipo="cliente" data-id="${c.id}" aria-label="Mais ações" aria-haspopup="menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/></svg>
+              </button>
             </div>
           </div>
         `;
       }).join('');
-
-      cont.querySelectorAll('[data-action="edit-c"]').forEach(b => {
-        b.addEventListener('click', () => openEditCliente(b.dataset.id));
-      });
     }
 
     function renderCaixa() {
@@ -608,7 +626,7 @@
         const isV = m.tipo === 'venda';
         return `
           <div class="list-item${isV ? ' list-item-venda' : ''}" data-id="${m.id}" data-tipo="${m.tipo}" style="padding-right:${isV ? '32px' : '16px'};">
-            <div class="avatar" style="background:${isV ? '#E6F4EC' : '#FDE8E8'};color:${isV ? 'var(--green)' : 'var(--red)'}">${isV ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>'}</div>
+            <div class="avatar" style="background:${isV ? '#E6F4EC' : '#FDE8E8'};color:${isV ? 'var(--green)' : 'var(--red)'}">${isV ? '💰' : '💸'}</div>
             <div class="info">
               <div class="title">${escHtml(m.descricao)}</div>
               <div class="sub">${m.data !== hojeStr ? m.data + ' · ' : ''}${m.hora}${isV ? ' · ' + escHtml(m.cliente || 'Anónimo') + ' · ' + escHtml(m.metodoPagamento || '') : ''}
@@ -672,15 +690,12 @@
             <div style="font-size:.72rem;color:var(--text-secondary);">${escHtml(p.especialidade || '')}</div>
           </div>
           <div class="actions">
-            <button class="btn btn-sm btn-secondary" data-id="${p.id}" data-action="edit-p" data-role="admin" style="padding:4px 12px;font-size:.7rem;">Ajustar</button>
-            <button class="btn btn-sm btn-danger" data-id="${p.id}" data-action="del-p" data-role="admin" style="padding:4px 12px;font-size:.7rem;">Excluir</button>
+            <button class="row-menu-btn" data-action="row-menu" data-tipo="profissional" data-id="${p.id}" data-role="admin" aria-label="Mais ações" aria-haspopup="menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/></svg>
+            </button>
           </div>
         </div>
       `).join('');
-
-      cont.querySelectorAll('[data-action="edit-p"]').forEach(b => {
-        b.addEventListener('click', () => openEditProf(b.dataset.id));
-      });
     }
 
     function renderServicos() {
@@ -696,22 +711,19 @@
         const profs = s.profissionais && s.profissionais.length > 0 ? s.profissionais.join(', ') : 'Todos os profissionais disponíveis';
         return `
           <div class="list-item" style="cursor:default;">
-            <div class="avatar" style="background:var(--gold-light);color:var(--gold-dark);"><svg width="20" height="20" viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="4"><circle cx="28" cy="36" r="8"/><circle cx="52" cy="36" r="8"/><path d="M20 44 L60 24 M20 24 L60 44"/></svg></div>
+            <div class="avatar" style="background:var(--gold-light);color:var(--gold-dark);">💈</div>
             <div class="info">
               <div class="title">${escHtml(s.nome)}</div>
-              <div class="sub">${fmtKz(s.precoBase)} · <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="8" r="4"/><path d="M5.3 18.3C6.8 16.5 9.2 15 12 15s5.2 1.5 6.7 3.3"/></svg> ${escHtml(profs)}</div>
+              <div class="sub">${fmtKz(s.precoBase)} · 👤 ${escHtml(profs)}</div>
             </div>
             <div class="actions">
-              <button class="btn btn-sm btn-secondary" data-id="${s.id}" data-action="edit-servico" data-role="admin" style="padding:4px 12px;font-size:.7rem;">Ajustar</button>
-              <button class="btn btn-sm btn-danger" data-id="${s.id}" data-action="del-servico" data-role="admin" style="padding:4px 12px;font-size:.7rem;">Excluir</button>
+              <button class="row-menu-btn" data-action="row-menu" data-tipo="servico" data-id="${s.id}" data-role="admin" aria-label="Mais ações" aria-haspopup="menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/></svg>
+              </button>
             </div>
           </div>
         `;
       }).join('');
-
-      container.querySelectorAll('[data-action="edit-servico"]').forEach(b => {
-        b.addEventListener('click', () => openServicoModal(b.dataset.id));
-      });
     }
 
     function renderBadges() {
@@ -786,7 +798,7 @@
       const prevServ = catSel.value;
       catSel.innerHTML = state.servicos.map(s =>
         `<option value="${escHtml(s.nome)}" data-preco="${s.precoBase}">${escHtml(s.nome)}</option>`
-      ).join('') + '<option value="__custom" data-preco="">+ Outro (personalizado)</option>';
+      ).join('') + '<option value="__custom" data-preco="">✏️ Outro (personalizado)</option>';
       if (prevServ) catSel.value = prevServ;
       const filtrarProfsVenda = (servicoNome) => {
         let profs;
@@ -1242,7 +1254,7 @@
       } else {
         list.innerHTML = vendasHoje.map(v => `
           <div class="list-item" style="cursor:default;">
-            <div class="avatar" style="background:#E6F4EC;color:var(--green);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div>
+            <div class="avatar" style="background:#E6F4EC;color:var(--green);">💰</div>
             <div class="info">
               <div class="title">${escHtml(v.cliente || 'Anónimo')}</div>
               <div class="sub">${escHtml(v.descricao)} · ${v.hora}</div>
@@ -1278,10 +1290,10 @@
       } else {
         list.innerHTML = filtrados.map(a => `
           <div class="list-item" style="cursor:default;">
-            <div class="avatar" style="background:var(--gold-light);color:var(--gold-dark);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></div>
+            <div class="avatar" style="background:var(--gold-light);color:var(--gold-dark);">📅</div>
             <div class="info">
               <div class="title" style="color:var(--gold-dark);">${escHtml(a.servico)}</div>
-              <div class="sub"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="8" r="4"/><path d="M5.3 18.3C6.8 16.5 9.2 15 12 15s5.2 1.5 6.7 3.3"/></svg> ${escHtml(a.cliente)} · ${a.hora} · ${escHtml(a.profissional)}</div>
+              <div class="sub">👤 ${escHtml(a.cliente)} · ${a.hora} · ${escHtml(a.profissional)}</div>
             </div>
             <div class="action">${fmtKz(a.preco)}</div>
           </div>
@@ -1454,24 +1466,9 @@
         // editar/excluir profissionais e serviços, KPI de faturamento) e
         // precisam de ser corrigidas de novo para o papel actual.
         aplicarPermissoes();
-        atualizarVisibilidadeFab();
+        atualizarVisibilidadeAtalhos();
       });
     });
-
-    // ====================================================================
-    //  FAB — visível apenas nas duas primeiras telas (Dashboard e Agenda).
-    //  Nas restantes (Clientes, Caixa, Equipa, IA) o botão "+" flutuante
-    //  é ocultado: nessas áreas agendar não é a ação principal e o botão
-    //  passaria a competir com ações próprias de cada aba.
-    //  Baseado em `activeTab` (não no DOM) para se manter correto mesmo
-    //  em chamadas vindas de updateUI() fora do clique de navegação.
-    // ====================================================================
-    function atualizarVisibilidadeFab() {
-      const fabEl = document.getElementById('fab-agendar');
-      if (!fabEl) return;
-      const visivelEm = ['dashboard', 'agenda'];
-      fabEl.classList.toggle('fab-hidden', !visivelEm.includes(activeTab));
-    }
 
     // ====================================================================
     //  ✅ Ponto 4 (correção adicional) — a restauração de `activeTab` do
@@ -1974,8 +1971,97 @@
       }
     });
 
+    // ====================================================================
+    //  MENU DE ACÇÕES DA LINHA (⋮) — Clientes / Equipa / Serviços
+    // ====================================================================
+    function abrirMenuLinha(anchorEl, tipo, id) {
+      const menu = document.getElementById('row-menu');
+      const editLabel = document.getElementById('row-menu-edit-label');
+      const delBtn = document.getElementById('row-menu-delete');
+      const papel = normalizarRole(state.config.userRole);
+
+      const config = {
+        cliente:      { editLabel: 'Ajustar perfil', delAction: 'del-cliente', podeEliminar: papel === 'admin' || papel === 'gerente' },
+        profissional: { editLabel: 'Ajustar',         delAction: 'del-p',       podeEliminar: papel === 'admin' },
+        servico:      { editLabel: 'Ajustar',         delAction: 'del-servico', podeEliminar: papel === 'admin' },
+      }[tipo];
+      if (!config) return;
+
+      // Fecha se já estava aberto para a mesma linha (toggle); reabre
+      // sempre que for uma linha diferente.
+      if (menu.classList.contains('is-open') && menu.dataset.id === id && menu.dataset.tipo === tipo) {
+        fecharMenuLinha();
+        return;
+      }
+
+      editLabel.textContent = config.editLabel;
+      menu.dataset.tipo = tipo;
+      menu.dataset.id = id;
+      delBtn.dataset.action = config.delAction;
+      delBtn.dataset.id = id;
+      delBtn.style.display = config.podeEliminar ? 'flex' : 'none';
+
+      document.querySelectorAll('.row-menu-btn.is-open').forEach(b => b.classList.remove('is-open'));
+      anchorEl.classList.add('is-open');
+
+      // Posiciona junto ao botão tocado, sem deixar o menu sair do ecrã.
+      menu.style.display = 'flex';
+      const rect = anchorEl.getBoundingClientRect();
+      const menuWidth = menu.offsetWidth || 168;
+      const menuHeight = menu.offsetHeight || 90;
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      let top = rect.bottom + 6;
+      if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 6;
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+      requestAnimationFrame(() => menu.classList.add('is-open'));
+    }
+
+    function fecharMenuLinha() {
+      const menu = document.getElementById('row-menu');
+      if (!menu.classList.contains('is-open')) return;
+      menu.classList.remove('is-open');
+      document.querySelectorAll('.row-menu-btn.is-open').forEach(b => b.classList.remove('is-open'));
+      setTimeout(() => {
+        if (!menu.classList.contains('is-open')) menu.style.display = 'none';
+      }, 150);
+    }
+
+    document.getElementById('row-menu-edit').addEventListener('click', () => {
+      const menu = document.getElementById('row-menu');
+      const tipo = menu.dataset.tipo;
+      const id = menu.dataset.id;
+      if (tipo === 'cliente') openEditCliente(id);
+      else if (tipo === 'profissional') openEditProf(id);
+      else if (tipo === 'servico') openServicoModal(id);
+    });
+
+    // Clique fora do menu ou do botão "⋮" fecha-o.
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#row-menu') || e.target.closest('[data-action="row-menu"]')) return;
+      fecharMenuLinha();
+    });
+
     // SUBSTITUIÇÃO DE CONFIRM NATIVO (Fase 1)
     document.addEventListener('click', async function(e) {
+      const rowMenuBtn = e.target.closest('[data-action="row-menu"]');
+      if (rowMenuBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        abrirMenuLinha(rowMenuBtn, rowMenuBtn.dataset.tipo, rowMenuBtn.dataset.id);
+        return;
+      }
+
+      if (e.target.closest('.row-menu-item')) {
+        // Fecha o popover já — a acção em si (editar/eliminar) continua a
+        // ser tratada mais abaixo neste mesmo handler (o botão "Excluir"
+        // aqui dentro reutiliza exactamente o mesmo data-action="del-*"
+        // dos botões antigos, por isso a lógica de permissão/confirmação/
+        // eliminação já existente aplica-se sem duplicar nada).
+        fecharMenuLinha();
+      }
+
       const target = e.target.closest('[data-action="cancelar-agenda"]');
       if (target) {
         e.preventDefault();
