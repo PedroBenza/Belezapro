@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async function init() {
   }
 
   // Splash (removida após verificação de sessão)
-  setTimeout(hideSplash, 1100);
+  setTimeout(hideSplash, 1500);
 
   // Timeout de emergência: se splash persistir além de 3s, força remoção
   setTimeout(function() {

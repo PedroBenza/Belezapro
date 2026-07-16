@@ -2,7 +2,6 @@
 //  SUPABASE — CONFIGURAÇÃO (SUPABASE_URL/ANON_KEY movidas para core-constants.js)
 //  (extraído do app.js na Fase B da modularização)
 // ====================================================================
-// Supabase client (SDK v2)
 const { createClient } = supabase; // supabase global from CDN
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -59,7 +58,14 @@ async function checkSession() {
       if (typeof carregarHistoricoIA === 'function') carregarHistoricoIA();
       aplicarPermissoes();
       if (!localStorage.getItem('bp_onboarding_seen')) {
-        if (typeof hideSplash === 'function') hideSplash();
+        // ============================================================
+        // CORREÇÃO: remover splash manualmente (sem depender de hideSplash)
+        // ============================================================
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+          splash.style.opacity = '0';
+          setTimeout(() => { splash.style.display = 'none'; }, 600);
+        }
         const onbEl = document.getElementById('onboarding-screen');
         onbEl.style.display = 'flex';
         onbEl.style.pointerEvents = 'none';
@@ -197,16 +203,14 @@ document.getElementById('login-btn').addEventListener('click', async function() 
     aplicarPermissoes();
     // Onboarding (Fase 2)
     if (!localStorage.getItem('bp_onboarding_seen')) {
+      // ============================================================
+      // CORREÇÃO: remover splash manualmente
+      // ============================================================
       const splash = document.getElementById('splash-screen');
       if (splash) { splash.style.display = 'none'; }
       const onbEl = document.getElementById('onboarding-screen');
       onbEl.style.display = 'flex';
-      // Bloqueia toques nos primeiros 500ms: em ecrãs táteis, o toque que
-      // originou o login pode gerar um "clique fantasma" atrasado (até
-      // ~300ms no Android) exatamente neste ponto do ecrã — sem isto, esse
-      // clique pode cair em cima do botão "Saltar"/"Começar agora" e fechar
-      // o onboarding sozinho, no mesmo instante em que abre. 50ms sozinho
-      // não cobre essa janela.
+      // Bloqueia toques nos primeiros 500ms
       onbEl.style.pointerEvents = 'none';
       setTimeout(() => { onbEl.style.pointerEvents = 'auto'; }, 500);
       showOnboardingSlide(0);
