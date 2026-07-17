@@ -737,19 +737,79 @@
 
   <!-- MODAL SUCESSO VENDA (CORRIGIDO: elementos de animação adicionados) -->
   <div id="modal-venda-sucesso" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="sucesso-title">
-    <div class="modal-sheet" style="text-align:center;padding:32px 24px;">
-      <div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;background:var(--gold-50, #FFFBEB);display:flex;align-items:center;justify-content:center;">
-        <svg viewBox="0 0 80 80" style="width:60px;height:60px;">
-          <circle cx="40" cy="40" r="36" fill="none" stroke="var(--gold, #C9982E)" stroke-width="6" stroke-dasharray="226" stroke-dashoffset="226" id="success-circle"/>
-          <polyline points="24,40 36,52 56,28" fill="none" stroke="var(--gold, #C9982E)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" stroke-dashoffset="40" id="success-check"/>
-        </svg>
-      </div>
-      <h2 id="sucesso-title" class="modal-title" style="font-family:var(--font-serif);font-size:1.4rem;margin-bottom:4px;">Venda registada!</h2>
-      <p style="color:var(--text-secondary);margin-bottom:8px;">O valor foi adicionado ao caixa</p>
-      <div style="font-family:var(--font-serif);font-size:2rem;font-weight:700;color:var(--gold-dark);margin-bottom:12px;" id="sucesso-valor">0 Kz</div>
-      <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-        <button class="btn btn-secondary btn-block" id="btn-imprimir-sucesso">🖨️ Imprimir Recibo</button>
-        <button class="btn btn-primary btn-block" id="btn-voltar-sucesso">Voltar ao início</button>
+    <div class="modal-sheet modal-sheet--recibo" style="max-width:420px; padding:0; background:var(--card-white); border-radius:var(--radius-md); box-shadow:var(--shadow-strong); overflow:hidden;">
+
+      <!-- Barra de ouro no topo (acabamento premium) -->
+      <div style="height:4px; background:linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light), var(--gold), var(--gold-dark));"></div>
+
+      <div style="padding:22px 20px 20px;">
+        <!-- Cabeçalho: Logótipo + separador dourado -->
+        <div style="text-align:center; margin-bottom:16px;">
+          <div class="recibo-logo" style="font-family:'Playfair Display',var(--font-serif); font-size:1.4rem; font-weight:700; letter-spacing:-0.02em;">
+            <span class="recibo-logo-gold">Beleza</span><span style="color:var(--text-primary);">Pro</span>
+          </div>
+          <div style="width:44px; height:1.5px; margin:6px auto 0; background:linear-gradient(90deg, transparent, var(--gold), transparent);"></div>
+        </div>
+
+        <!-- Status de sucesso: check animado + valor -->
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:var(--gold-light); padding:12px 14px; border-radius:var(--radius-sm); border-left:3px solid var(--gold);">
+          <div style="width:34px;height:34px;flex-shrink:0;border-radius:50%;background:var(--card-white);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(212,175,55,.25);">
+            <svg viewBox="0 0 34 34" style="width:22px;height:22px;">
+              <circle cx="17" cy="17" r="14" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-dasharray="88" stroke-dashoffset="88" id="success-circle"/>
+              <polyline points="10,17.5 14.5,22 24,12" fill="none" stroke="var(--gold-dark)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="17" stroke-dashoffset="17" id="success-check"/>
+            </svg>
+          </div>
+          <div style="flex:1;">
+            <div id="sucesso-title" style="font-weight:600; font-size:0.85rem; color:var(--text-primary);">Venda concluída</div>
+            <div style="font-size:0.72rem; color:var(--text-secondary);">O valor foi adicionado ao caixa</div>
+          </div>
+          <div style="font-family:'Playfair Display',var(--font-serif); font-size:1.3rem; font-weight:700; color:var(--gold-dark); font-variant-numeric:tabular-nums;" id="sucesso-valor">0 Kz</div>
+        </div>
+
+        <!-- RECIBO -->
+        <div style="background:var(--bg-soft); padding:16px 14px; border-radius:var(--radius-sm); margin-bottom:16px; border:1px solid var(--border-soft); font-size:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-soft); padding-bottom:8px;">
+            <span style="font-weight:600; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.06em;">Recibo de Venda</span>
+            <span style="font-weight:700; font-family:var(--font-mono); font-size:0.75rem; color:var(--gold-dark);" id="detalhe-venda-id">#----</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:80px 1fr; gap:4px 12px; margin-bottom:10px; font-size:0.7rem;">
+            <span style="font-weight:600; color:var(--text-secondary);">Cliente</span>
+            <span style="font-weight:500; color:var(--text-primary);" id="detalhe-venda-cliente">Anónimo</span>
+            <span style="font-weight:600; color:var(--text-secondary);">Profissional</span>
+            <span style="font-weight:500; color:var(--text-primary);" id="detalhe-venda-profissional">—</span>
+            <span style="font-weight:600; color:var(--text-secondary);">Data / Hora</span>
+            <span style="font-weight:500; color:var(--text-primary); font-variant-numeric:tabular-nums;" id="detalhe-venda-datahora">--/--/---- · --:--</span>
+            <span style="font-weight:600; color:var(--text-secondary);">Pagamento</span>
+            <span style="font-weight:500; color:var(--text-primary);" id="detalhe-venda-pagamento">💵 Numerário</span>
+          </div>
+
+          <div style="border-top:1px dashed var(--border-soft); margin:6px 0 8px;"></div>
+
+          <div style="display:grid; grid-template-columns:1fr 36px 48px 56px; gap:4px; font-weight:600; font-size:0.6rem; text-transform:uppercase; color:var(--text-secondary); letter-spacing:0.06em; padding-bottom:4px; border-bottom:1px solid var(--border-soft);">
+            <span>Descrição</span>
+            <span style="text-align:center;">Qtd</span>
+            <span style="text-align:right;">P.Unit</span>
+            <span style="text-align:right;">Total</span>
+          </div>
+
+          <div id="detalhe-venda-itens" style="margin-top:4px;"></div>
+
+          <div style="border-top:2px solid var(--gold); margin:8px 0 0; padding-top:6px; display:flex; justify-content:space-between; align-items:baseline; font-weight:700; font-size:0.9rem;">
+            <span style="color:var(--text-secondary); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em;">Total</span>
+            <span style="font-family:'Playfair Display',var(--font-serif); color:var(--gold-dark); font-variant-numeric:tabular-nums;" id="detalhe-venda-total">0 Kz</span>
+          </div>
+        </div>
+
+        <!-- Botões -->
+        <div style="display:flex; gap:10px; width:100%;">
+          <button class="btn btn-secondary" id="btn-imprimir-sucesso" style="flex:1; padding:10px 0; font-size:0.75rem; border-color:var(--border-soft);">
+            <span style="margin-right:4px;">🖨️</span> Imprimir
+          </button>
+          <button class="btn btn-primary" id="btn-voltar-sucesso" style="flex:2; padding:10px 0; font-size:0.75rem; font-weight:600;">
+            Continuar
+          </button>
+        </div>
       </div>
     </div>
   </div>

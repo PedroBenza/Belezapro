@@ -365,6 +365,7 @@ async function registarVenda(dados) {
     metodoPagamento: dados.metodoPagamento || 'Numerário',
     data: hoje(),
     hora: horaAgora(),
+    reciboNum: nextReciboNum(),
   };
   await dbPut('movimentos', mov);
   state.movimentos.push(mov);
@@ -1129,7 +1130,7 @@ function imprimirRecibo(venda) {
     return;
   }
   const storeName = state.config.storeName || 'BelezaPro';
-  const num = nextReciboNum();
+  const num = venda.reciboNum || nextReciboNum();
   const itensHtml = venda.itens && venda.itens.length > 0 ?
     `<div class="r-th"><span class="r-th-desc">SERVICO</span><span class="r-th-qty">QT</span><span class="r-th-sub">TOTAL</span></div>
      ${venda.itens.map(i => `<div class="r-item"><span class="r-item-name">${escHtml(i.nome)}</span><span class="r-item-qty">x${i.quantidade}</span><span class="r-item-sub">${fmtKz(i.subtotal)}</span></div>`).join('')}` :
@@ -1831,18 +1832,42 @@ document.getElementById('venda-add-cliente-rapido').addEventListener('click', ()
 // Tela de sucesso da venda
 let ultimaVendaId = null;
 
+const PAGAMENTO_ICONES = {
+  'Numerário': '💵 Numerário',
+  'Multicaixa Express': '📱 Multicaixa Express',
+  'Transferência Bancária': '🏦 Transferência Bancária',
+  'Cartão': '💳 Cartão',
+  'Outro': '💰 Outro',
+};
+
 function mostrarConfirmacaoVenda(vendaId) {
   const venda = state.movimentos.find(m => m.id === vendaId);
   if (!venda) return;
-  document.getElementById('sucesso-valor').textContent = fmtKz(venda.valor);
   ultimaVendaId = vendaId;
+
+  document.getElementById('sucesso-valor').textContent = fmtKz(venda.valor);
+  document.getElementById('detalhe-venda-id').textContent = '#' + (venda.reciboNum || nextReciboNum());
+  document.getElementById('detalhe-venda-cliente').textContent = venda.cliente || 'Anónimo';
+  document.getElementById('detalhe-venda-profissional').textContent = getProfissionalNome(venda.profissional_id);
+  const [ano, mes, dia] = (venda.data || '').split('-');
+  document.getElementById('detalhe-venda-datahora').textContent = (dia ? `${dia}/${mes}/${ano}` : '--/--/----') + ' · ' + (venda.hora || '--:--');
+  document.getElementById('detalhe-venda-pagamento').textContent = PAGAMENTO_ICONES[venda.metodoPagamento] || ('💰 ' + (venda.metodoPagamento || 'Numerário'));
+  document.getElementById('detalhe-venda-itens').innerHTML = (venda.itens || []).map(i => `
+    <div class="r-item-row">
+      <span>${escHtml(i.nome)}</span>
+      <span>${i.quantidade}</span>
+      <span>${fmtKz(i.precoUnit)}</span>
+      <span>${fmtKz(i.subtotal)}</span>
+    </div>`).join('');
+  document.getElementById('detalhe-venda-total').textContent = fmtKz(venda.valor);
+
   openModal('modal-venda-sucesso');
   const circle = document.getElementById('success-circle');
   const check = document.getElementById('success-check');
-  if (circle) { circle.style.strokeDashoffset = '226';
+  if (circle) { circle.style.strokeDashoffset = '88';
     requestAnimationFrame(() => { circle.style.animation = 'none';
       requestAnimationFrame(() => { circle.style.animation = 'drawCircle 0.5s ease-out forwards'; }); }); }
-  if (check) { check.style.strokeDashoffset = '40';
+  if (check) { check.style.strokeDashoffset = '17';
     requestAnimationFrame(() => { check.style.animation = 'none';
       requestAnimationFrame(() => { check.style.animation = 'drawCheck 0.3s 0.5s ease-out forwards'; }); }); }
 }

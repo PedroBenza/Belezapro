@@ -976,6 +976,26 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
 }
 .cart-total-row .ct-label { font-weight: 600; font-size: .9rem; color: var(--text-secondary); }
 
+/* Recibo de venda premium — logótipo com gradiente dourado ("foil") */
+.recibo-logo-gold {
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 45%, #F4E4B0 55%, var(--gold) 65%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--gold);
+}
+.modal-sheet--recibo #detalhe-venda-itens .r-item-row {
+  display: grid;
+  grid-template-columns: 1fr 36px 48px 56px;
+  gap: 4px;
+  padding: 4px 0;
+  font-size: .7rem;
+  color: var(--text-primary);
+}
+.modal-sheet--recibo #detalhe-venda-itens .r-item-row span:nth-child(2) { text-align: center; color: var(--text-secondary); }
+.modal-sheet--recibo #detalhe-venda-itens .r-item-row span:nth-child(3),
+.modal-sheet--recibo #detalhe-venda-itens .r-item-row span:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
+
 /* Modal "Venda registada" — animação de check (usada em mostrarConfirmacaoVenda, app.js) */
 @keyframes drawCircle {
   to { stroke-dashoffset: 0; }
