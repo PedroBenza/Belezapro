@@ -130,16 +130,17 @@
 
       <div class="offline-banner" id="offline-banner"><span>📡</span> Modo offline — todas as funcionalidades disponíveis</div>
 
-      <!-- CTA VENDA -->
-      <button class="venda-cta-bar" id="nova-venda-hero-btn" aria-label="Registar nova venda">
-        <div class="cta-icon">💰</div>
-        <div class="cta-text">
-          <div class="cta-main">Registar Venda</div>
-          <div class="cta-sub">Toque para iniciar uma nova venda agora</div>
-        </div>
-        <span class="cta-arrow">›</span>
-      </button>
-
+      <!-- CTA VENDA — BRANDING -->
+<button class="venda-cta-bar" id="nova-venda-hero-btn" aria-label="Registar nova venda">
+  <div class="cta-icon">+</div>
+  <div class="cta-text">
+    <div class="cta-main">
+      Registar <span class="gold-word">Venda</span>
+    </div>
+    <div class="cta-sub">Toque para iniciar uma nova venda agora</div>
+  </div>
+  <span class="cta-arrow visible">→</span>
+</button>
       <!-- ===== MAIN CONTENT ===== -->
       <main class="main-content">
 
@@ -151,27 +152,40 @@
               <span style="font-size:.7rem;color:var(--text-muted);" id="greeting">Bom dia!</span>
             </div>
             <div class="kpi-grid">
-              <div class="kpi-card gold-accent" id="kpi-revenue-card" data-role="admin,gerente">
-                <div class="kpi-label">Faturamento Hoje</div>
-                <div class="kpi-value" style="color:var(--gold-dark);" id="kpi-revenue">0 Kz</div>
-                <div class="kpi-sub" id="kpi-revenue-count">0 serviços</div>
-              </div>
-              <div class="kpi-card green-accent" id="kpi-agenda-card">
-                <div class="kpi-label">Agendamentos</div>
-                <div class="kpi-value" id="kpi-agendamentos">0</div>
-                <div class="kpi-sub" id="kpi-agendamentos-status">0 realizados</div>
-              </div>
-              <div class="kpi-card" data-role="admin,gerente">
-                <div class="kpi-label">Ticket Médio</div>
-                <div class="kpi-value" id="kpi-ticket">0 Kz</div>
-                <div class="kpi-sub">por serviço</div>
-              </div>
-              <div class="kpi-card">
-                <div class="kpi-label">Clientes Hoje</div>
-                <div class="kpi-value" id="kpi-clients">0</div>
-                <div class="kpi-sub">atendidos</div>
-              </div>
-            </div>
+  <!-- Card 1: Faturamento -->
+  <div class="kpi-card gold-accent" id="kpi-revenue-card" data-role="admin,gerente">
+    <div class="kpi-label">Faturamento Hoje</div>
+    <div class="kpi-value" style="color:var(--gold-dark);" id="kpi-revenue">0 Kz</div>
+    <div class="kpi-sub" id="kpi-revenue-count">0 serviços</div>
+  </div>
+
+  <!-- Card 2: Agendamentos -->
+  <div class="kpi-card green-accent" id="kpi-agenda-card">
+    <div class="kpi-label">Agendamentos</div>
+    <div class="kpi-value" id="kpi-agendamentos">0</div>
+    <div class="kpi-sub" id="kpi-agendamentos-status">0 realizados</div>
+  </div>
+
+  <!-- Card 3: Ticket Médio com Sparkline (REFINADO) -->
+<div class="kpi-card" style="grid-column: span 2; padding: 14px 20px;">
+  <div class="kpi-main-content">
+    <div class="kpi-left">
+      <div class="kpi-label">Ticket Médio</div>
+      <div class="kpi-value" id="kpi-ticket">0 Kz</div>
+      <div class="kpi-sub" id="kpi-ticket-sub">por cliente</div>
+    </div>
+    <div class="kpi-right">
+      <div class="sparkline-wrapper">
+        <canvas id="ticket-sparkline" width="84" height="28"></canvas>
+      </div>
+      <div class="kpi-trend">
+        <span class="trend-up" id="ticket-trend-percent">—</span>
+        <span class="trend-period" id="ticket-trend-period">Últimos 7 dias</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;">Próximos Atendimentos</span>
               <span style="font-size:.7rem;color:var(--text-muted);" id="agenda-count">0 pendentes</span>
@@ -210,11 +224,11 @@
           <div class="tab-inner">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;">Agenda</span>
-              <div style="display:flex;gap:6px;align-items:center;">
-                <button class="btn btn-sm btn-secondary" id="agenda-prev">◀</button>
-                <span style="font-weight:600;font-size:.85rem;" id="agenda-date-label">Hoje</span>
-                <button class="btn btn-sm btn-secondary" id="agenda-next">▶</button>
-              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+  <button id="agenda-prev" style="background:none;border:none;font-size:1.2rem;color:var(--text-muted);cursor:pointer;padding:4px 8px;transition:color 0.15s ease;">◀</button>
+  <span style="font-weight:600;font-size:.85rem;color:var(--text-primary);" id="agenda-date-label">Hoje</span>
+  <button id="agenda-next" style="background:none;border:none;font-size:1.2rem;color:var(--text-muted);cursor:pointer;padding:4px 8px;transition:color 0.15s ease;">▶</button>
+</div>
             </div>
             <div id="agenda-full-list"></div>
           </div>

@@ -473,8 +473,41 @@ function renderDashboard() {
   document.getElementById('kpi-revenue-count').textContent = totalVendas + ' serviços';
   animateKpi('kpi-agendamentos', String(agHoje.length));
   document.getElementById('kpi-agendamentos-status').textContent = realizados + ' realizados';
-  animateKpi('kpi-ticket', fmtKz(ticket));
-  animateKpi('kpi-clients', String(clientesUnicos));
+  // Atualiza o valor principal
+animateKpi('kpi-ticket', fmtKz(ticket));
+
+// Atualiza o subtítulo (fixo)
+document.getElementById('kpi-ticket-sub').textContent = 'por cliente';
+
+// --- Sparkline (últimos 7 dias) ---
+const ultimos7Dias = [];
+for (let i = 6; i >= 0; i--) {
+  const d = new Date();
+  d.setDate(d.getDate() - i);
+  const ds = d.toISOString().split('T')[0];
+  const vendasDia = state.movimentos.filter(m => m.data === ds && m.tipo === 'venda');
+  const totalDia = vendasDia.reduce((s, v) => s + v.valor, 0);
+  const qtdDia = vendasDia.length;
+  const ticketDia = qtdDia > 0 ? totalDia / qtdDia : 0;
+  ultimos7Dias.push(ticketDia);
+}
+
+// Desenha o sparkline
+desenharSparkline('ticket-sparkline', ultimos7Dias, '#D4AF37');
+
+// Calcula a variação
+const primeiro = ultimos7Dias[0] || 0;
+const ultimo = ultimos7Dias[ultimos7Dias.length - 1] || 0;
+let variacao = 0;
+if (primeiro > 0) {
+  variacao = ((ultimo - primeiro) / primeiro) * 100;
+}
+const sinal = variacao >= 0 ? '↑' : '↓';
+const percentEl = document.getElementById('ticket-trend-percent');
+if (percentEl) {
+  percentEl.innerHTML = `<span class="trend-arrow">${sinal}</span> ${Math.abs(Math.round(variacao))}%`;
+}
+document.getElementById('ticket-trend-period').textContent = 'Últimos 7 dias';
 
   const proximos = agHoje.filter(a => a.status !== 'realizado').sort((a, b) => a.hora.localeCompare(b.hora)).slice(0, 4);
   const cont = document.getElementById('agenda-today-list');
@@ -1089,7 +1122,84 @@ function initChartControls() {
 // ====================================================================
 //  DETALHE VENDA E IMPRESSÃO
 // ====================================================================
-let vendaAtual = null;
+let vendaAtual = null;// ====================================================================
+//  SPARKLINE — Linha fina, sem bolhas, sem brilhos
+// ====================================================================
+function desenharSparkline(canvasId, dados, cor = '#D4AF37') {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;   // 84
+  const height = canvas.height; // 28
+
+  ctx.clearRect(0, 0, width, height);
+
+  if (!dados || dados.length < 2) {
+    ctx.beginPath();
+    ctx.moveTo(0, height - 4);
+    ctx.lineTo(width, height - 4);
+    ctx.strokeStyle = cor;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.15;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    return;
+  }
+
+  const min = Math.min(...dados, 0);
+  const max = Math.max(...dados, 10);
+  const range = max - min || 1;
+  const padding = 3;
+  const usableHeight = height - padding * 2;
+
+  ctx.beginPath();
+  for (let i = 0; i < dados.length; i++) {
+    const x = (i / (dados.length - 1)) * width;
+    const y = height - padding - ((dados[i] - min) / range) * usableHeight;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+
+  ctx.strokeStyle = cor;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  const lastX = width;
+  const lastY = height - padding - ((dados[dados.length - 1] - min) / range) * usableHeight;
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
+  ctx.fillStyle = cor;
+  ctx.fill();
+  // --- Cabeça de seta (triângulo) na extremidade ---
+if (dados.length >= 2) {
+  const ultimoValor = dados[dados.length - 1];
+  const penultimoValor = dados[dados.length - 2];
+  const direcao = ultimoValor >= penultimoValor ? 1 : -1; // 1 = sobe, -1 = desce
+
+  const xSeta = lastX;
+  const ySeta = lastY;
+
+  const tamanhoSeta = 5;
+  ctx.beginPath();
+  if (direcao > 0) {
+    // Seta aponta para cima e direita
+    ctx.moveTo(xSeta - tamanhoSeta, ySeta + tamanhoSeta);
+    ctx.lineTo(xSeta, ySeta - tamanhoSeta);
+    ctx.lineTo(xSeta + tamanhoSeta, ySeta + tamanhoSeta);
+  } else {
+    // Seta aponta para baixo e direita
+    ctx.moveTo(xSeta - tamanhoSeta, ySeta - tamanhoSeta);
+    ctx.lineTo(xSeta, ySeta + tamanhoSeta);
+    ctx.lineTo(xSeta + tamanhoSeta, ySeta - tamanhoSeta);
+  }
+  ctx.closePath();
+  ctx.fillStyle = cor;
+  ctx.fill();
+}
+  
+}
 
 function abrirDetalheVenda(id) {
   const venda = state.movimentos.find(m => m.id === id && m.tipo === 'venda');

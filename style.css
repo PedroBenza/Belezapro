@@ -132,54 +132,115 @@ body {
 .btn-secondary.is-loading::after { border-top-color: var(--text-primary); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== CTA VENDA (CORRIGIDO: card branco elegante conforme DOC 1) ===== */
+/* ===== CTA VENDA — "A PALAVRA DE OURO" (Branding Tipográfico) ===== */
 .venda-cta-bar {
-  background: var(--card-white);
+  background: #F9F7F5; /* Fundo suave, como um campo de entrada */
   border: 1px solid var(--border-soft);
+  border-bottom: 1.5px solid var(--gold); /* Apenas a base dourada */
   border-radius: var(--radius-md);
-  padding: 12px 16px;
+  padding: 14px 18px;
   margin: 0 16px 16px 16px;
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: var(--shadow-premium);
+  box-shadow: 0 1px 0 rgba(20, 17, 15, 0.03);
   cursor: pointer;
-  transition: var(--transition);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
   text-align: left;
   width: auto;
 }
+
+/* Ao tocar, o fundo escurece ligeiramente e a borda dourada fica mais forte */
 .venda-cta-bar:active {
-  background: var(--bg-soft);
-  border-color: var(--gold);
+  background: #F3F0EC;
+  border-bottom-color: var(--gold-dark);
+  transform: translateY(1px);
 }
+
+/* Ícone: pill dourado com "+" (estilo Linear/Notion) */
 .venda-cta-bar .cta-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--gold-light);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px; /* Pill suave, não círculo */
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
   flex-shrink: 0;
-  border: none;
-  color: var(--gold-dark);
+  color: #FFFFFF;
+  font-size: 1.4rem;
+  font-weight: 300;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
+  transition: transform 0.15s ease;
 }
+
+.venda-cta-bar:active .cta-icon {
+  transform: scale(0.94);
+}
+
+/* Texto: "Registar" neutro, "Venda" em dourado (branding puro) */
 .venda-cta-bar .cta-text .cta-main {
+  font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
+
+/* A palavra "Venda" — o herói da ação */
+.venda-cta-bar .cta-text .cta-main .gold-word {
+  color: var(--gold-dark);
+  font-weight: 800;
+  position: relative;
+}
+
+/* Sublinhado dourado apenas na palavra "Venda" (marcador de luxo) */
+.venda-cta-bar .cta-text .cta-main .gold-word::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.venda-cta-bar:active .cta-text .cta-main .gold-word::after {
+  opacity: 1;
+  height: 3px;
+}
+
+/* Subtexto: alinhado e limpo */
 .venda-cta-bar .cta-text .cta-sub {
   font-size: 0.7rem;
   color: var(--text-muted);
-  margin-top: 1px;
+  margin-top: 2px;
+  font-weight: 400;
 }
+
+/* Seta: surge com delay, como um "convite" */
 .venda-cta-bar .cta-arrow {
   margin-left: auto;
-  color: var(--text-muted);
-  font-size: 1rem;
+  color: var(--gold);
+  font-size: 1.2rem;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.4s ease 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+
+/* A seta aparece quando o CTA é carregado (após 0.5s) e desliza para a posição */
+.venda-cta-bar .cta-arrow.visible {
   opacity: 0.6;
+  transform: translateX(0);
+}
+
+/* Ao tocar, a seta avança com mais força */
+.venda-cta-bar:active .cta-arrow {
+  transform: translateX(6px);
+  opacity: 1;
 }
 
 /* ===== CARDS ===== */
@@ -1543,4 +1604,83 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 @keyframes splashTagline {
   0%   { opacity:0; transform:translateY(6px); }
   100% { opacity:1; transform:translateY(0); }
+}/* ============================================================
+   KPI TICKET MÉDIO — SPARKLINE PREMIUM (Refinado)
+   ============================================================ */
+
+.kpi-card .kpi-main-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.kpi-card .kpi-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.kpi-card .kpi-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 0px;
+  margin-top: 2px;
+}
+
+.sparkline-wrapper {
+  height: 28px;
+  width: 84px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 0px;
+}
+
+.sparkline-wrapper canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.kpi-trend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.kpi-trend .trend-period {
+  font-family: var(--font-sans);
+  font-size: 0.5rem; /* Tamanho original, pequeno e discreto */
+  font-weight: 500;
+  color: #8C857A;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+/* Ícone da seta (↑) mais visível e com "cabeça" definida */
+.kpi-trend .trend-up {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1F2937;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.kpi-trend .trend-up .trend-arrow {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #D4AF37;
+  line-height: 1;
+  display: inline-block;
 }

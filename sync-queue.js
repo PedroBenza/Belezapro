@@ -1,6 +1,35 @@
 // ====================================================================
 //  FILA DE SINCRONIZAÇÃO (extraído do app.js na Fase B da modularização)
 // ====================================================================
+
+// ================================================================
+//  LISTA NEGRA DE ELIMINADOS (evita reimportação)
+// ================================================================
+const DELETED_KEY = 'bp_deleted_items';
+
+function getDeletedItems() {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveDeletedItems(items) {
+  try { localStorage.setItem(DELETED_KEY, JSON.stringify(items)); }
+  catch {}
+}
+
+function addDeletedItem(id, tabela) {
+  const items = getDeletedItems();
+  if (!items.find(i => i.id === id && i.tabela === tabela)) {
+    items.push({ id, tabela, ts: Date.now() });
+    saveDeletedItems(items);
+  }
+}
+
+function removeDeletedItem(id, tabela) {
+  const items = getDeletedItems().filter(i => !(i.id === id && i.tabela === tabela));
+  saveDeletedItems(items);
+}
+
 function getSyncQueue() {
   try { return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]'); }
   catch { return []; }
@@ -16,10 +45,6 @@ function atualizarIndicadorSync() {
   const text = document.getElementById('sync-text');
   if (!dot || !text) return;
   if (!navigator.onLine) { dot.classList.remove('online'); text.textContent = 'Offline'; return; }
-  // CORREÇÃO ("Online (2 pendentes)" preso mesmo com a fila "vazia"):
-  // itens com failed === true esgotaram as tentativas e ficam guardados
-  // de propósito (ver flushSyncQueue) para não perder dados, mas já não
-  // estão "pendentes" — não devem contar para o indicador.
   const fila = getSyncQueue();
   const pendentes = fila.filter(op => op.failed !== true).length;
   const falhados = fila.length - pendentes;
@@ -31,7 +56,6 @@ function atualizarIndicadorSync() {
 
 function addToSyncQueue(tabela, operacao, payload) {
   const q = getSyncQueue().filter(item => !(item.tabela === tabela && item.payload?.id === payload?.id));
-  // uuid() está definida em core-utils.js. Garantir que esse ficheiro seja carregado antes de sync-queue.js.
   q.push({ id: uuid(), tabela, operacao, payload, ts: Date.now(), attempts: 0 });
   saveSyncQueue(q);
 }
@@ -48,7 +72,6 @@ async function flushSyncQueue() {
   for (let i = 0; i < q.length; i++) {
     const op = q[i];
 
-    // Ignora itens já marcados como falha permanente
     if (op.failed === true) {
       restantes.push(op);
       continue;
@@ -62,6 +85,8 @@ async function flushSyncQueue() {
     try {
       if (op.operacao === 'delete') {
         await supabaseDelete(op.tabela, op.payload.id);
+        // DELETE bem-sucedido → remover da lista negra
+        removeDeletedItem(op.payload.id, op.tabela);
       } else {
         await supabaseUpsert(op.tabela, op.payload);
       }
@@ -77,19 +102,15 @@ async function flushSyncQueue() {
         break;
       }
 
-      // Incrementa tentativas (inicializa se ausente)
       op.attempts = (op.attempts || 0) + 1;
 
       if (op.attempts >= MAX_ATTEMPTS) {
         op.failed = true;
         itensFalhos.push(op.id || 'item');
-        // Mantém o item na fila (não perde)
         restantes.push(op);
       } else {
-        // Backoff exponencial com jitter: 2^attempts * 1000ms + aleatório
         const delay = Math.min(Math.pow(2, op.attempts) * 1000, 60000) + Math.random() * 1000;
         op.nextRetry = Date.now() + delay;
-        // Mantém para nova tentativa após o backoff
         restantes.push(op);
       }
     }
@@ -99,7 +120,6 @@ async function flushSyncQueue() {
     saveSyncQueue(restantes);
   }
 
-  // Notificação única para itens que atingiram o limite
   if (itensFalhos.length > 0) {
     const msg = `Falha ao sincronizar ${itensFalhos.length} operação(ões) após ${MAX_ATTEMPTS} tentativas. Contacte o suporte.`;
     toast(msg, 'error');
@@ -126,8 +146,14 @@ dbPut = async function(store, item) {
 };
 
 dbDelete = async function(store, id) {
-  await _dbDeleteOriginal(store, id);
+  // Adiciona à lista negra ANTES de eliminar localmente
   const tabela = STORE_TO_TABLE[store];
+  if (tabela) {
+    addDeletedItem(id, tabela);
+  }
+
+  await _dbDeleteOriginal(store, id);
+
   if (!tabela || !state.config.salaoId) return;
   if (navigator.onLine) {
     try { await supabaseDelete(tabela, id); }
@@ -135,4 +161,4 @@ dbDelete = async function(store, id) {
   } else {
     addToSyncQueue(tabela, 'delete', { id });
   }
-};
+};  

@@ -52,11 +52,20 @@ async function supabaseUpsert(tabela, item) {
   }
 }
 
+// ================================================================
+//  CORREÇÃO CRÍTICA: DELETE com filtro de salão + verificação
+// ================================================================
 async function supabaseDelete(tabela, id) {
   try {
     const authHeaders = await getAuthHeaders();
+    const salaoId = state.config.salaoId;
+    if (!salaoId) {
+      throw new Error('Salão não identificado. Faça logout e login novamente.');
+    }
+
+    // DELETE com filtro de salão (garante que só elimina do salão correto)
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}`,
+      `${SUPABASE_URL}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}&salao_id=eq.${encodeURIComponent(salaoId)}`,
       {
         method: 'DELETE',
         headers: authHeaders,
@@ -73,6 +82,18 @@ async function supabaseDelete(tabela, id) {
         errorBody = '(corpo da resposta não disponível)';
       }
       throw new Error(`Supabase delete ${tabela}: ${resp.status} - ${errorBody}`);
+    }
+
+    // Verificação: confirmar que o registo foi realmente eliminado
+    const checkResp = await fetch(
+      `${SUPABASE_URL}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}&salao_id=eq.${encodeURIComponent(salaoId)}`,
+      { headers: authHeaders }
+    );
+    if (checkResp.ok) {
+      const data = await checkResp.json();
+      if (data && data.length > 0) {
+        throw new Error(`DELETE não eliminou o registo ${id} na tabela ${tabela}. RLS pode estar a bloquear a operação.`);
+      }
     }
   } catch (err) {
     if (err.message === 'SESSION_EXPIRED') throw err;
@@ -290,6 +311,15 @@ async function carregarDoSupabase() {
           .map(op => op.payload?.id)
       );
 
+      // ================================================================
+      // LISTA NEGRA: itens eliminados permanentemente (nunca reimportar)
+      // ================================================================
+      const deletedIds = new Set(
+        (typeof getDeletedItems === 'function' ? getDeletedItems() : [])
+          .filter(i => i.tabela === tabela)
+          .map(i => i.id)
+      );
+
       const resultado = [];
       const itensParaSync = [];
 
@@ -305,7 +335,17 @@ async function carregarDoSupabase() {
       };
 
       for (const remoto of itensRemotos) {
-        if (idsComDeletePendente.has(remoto.id)) { mapLocal.delete(remoto.id); continue; }
+        // 1. Ignorar itens com DELETE pendente na fila
+        if (idsComDeletePendente.has(remoto.id)) {
+          mapLocal.delete(remoto.id);
+          continue;
+        }
+
+        // 2. Ignorar itens na lista negra (já foram eliminados)
+        if (deletedIds.has(remoto.id)) {
+          continue;
+        }
+
         const local = mapLocal.get(remoto.id);
         if (!local) {
           resultado.push(remoto);
@@ -332,9 +372,14 @@ async function carregarDoSupabase() {
         itensParaSync.push(local);
       }
 
-      for (const item of itensParaSync) {
-        addToSyncQueue(tabela, 'upsert', item);
-      }
+      // ================================================================
+      // CORREÇÃO F6: Ciclo leitura-escrita eliminado.
+      // Os itens acabaram de vir do servidor ou foram mesclados localmente.
+      // Não há razão para reenviá-los para a fila, evitando loops.
+      // ================================================================
+      // for (const item of itensParaSync) {
+      //   addToSyncQueue(tabela, 'upsert', item);
+      // }
 
       return resultado;
     };
