@@ -1415,10 +1415,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 }
 
 /* ===== CORREÇÃO DE CONTRASTE ===== */
-#kpi-revenue { color: var(--gold-dark) !important; }
-.cart-total-row .ct-val { color: var(--gold-dark) !important; }
-.detalhe-total .val { color: var(--gold-dark) !important; }
-.revenue-detail-total { color: var(--gold-dark) !important; }
+/* CORREÇÃO (limpeza): .ct-val e .val já declaram var(--gold-dark) na própria regra base
+   (linhas ~1099/1159) desde a regra 8.9 — os remendos !important abaixo ficaram mortos e foram removidos.
+   #kpi-revenue e .revenue-detail-total mantêm a cor; o !important saiu por não ser necessário
+   (ID já vence .kpi-value por especificidade; .revenue-detail-total não tem regra concorrente). */
+#kpi-revenue { color: var(--gold-dark); }
+.revenue-detail-total { color: var(--gold-dark); }
 .plano-pro { background: var(--gold-light); color: #836719; } /* CORREÇÃO (regra 8.9): ver .app-header .plano-pro */
 ::placeholder {
   color: var(--neutral-500, #8C7E72) !important;
@@ -1610,16 +1612,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   #splash-screen { background: linear-gradient(145deg, var(--gold-700), var(--gold-500), var(--gold-700)) !important; }
 }
 
-/* ===== CORREÇÃO: VALORES MONETÁRIOS EM FONTE MONO ===== */
-#caixa-saldo,
-.cart-total-row .ct-val,
-.detalhe-total .val,
-.list-item .action,
-.fecho-row .fr-val,
-.revenue-detail-total,
-#sucesso-valor {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace !important;
-}
+/* CORREÇÃO (limpeza — duplicação apontada no relatório): o bloco "VALORES MONETÁRIOS EM FONTE MONO !important"
+   foi removido daqui. Os seus 7 seletores já estavam cobertos pela regra global no fim do ficheiro
+   (mesma font-family, sem !important, e é a última regra da cascata — nenhuma mudança visual). */
 
 /* ===== SPLASH SCREEN — ANIMAÇÕES ===== */
 @keyframes splashLogo {
