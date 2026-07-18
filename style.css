@@ -21,7 +21,7 @@
   --card-white: #FFFFFF;
   --text-primary: #17140F;
   --text-secondary: #5C564E;
-  --text-muted: #8C857A;
+  --text-muted: #6B6560; /* CORREÇÃO (regra 8.9 do relatório): #8C857A falhava WCAG AA (3.65:1/3.26:1); este tom cumpre ≥4.5:1 mantendo a mesma família tonal */
   --text-on-ink: #ECE7DF;
   --border-soft: #DCD5C9;
   --border-ink: #2A241E;
@@ -30,6 +30,7 @@
   --transition: all 0.16s cubic-bezier(0.16,1,0.3,1);
   --green: #2C7A4D;
   --red: #B33A4A;
+  --warm-ivory: #F9F7F5;
 
   /* CORREÇÃO: mantidas todas as variáveis de radius conforme especificação */
   --radius-sm: 3px;
@@ -134,7 +135,7 @@ body {
 
 /* ===== CTA VENDA — "A PALAVRA DE OURO" (Branding Tipográfico) ===== */
 .venda-cta-bar {
-  background: #F9F7F5; /* Fundo suave, como um campo de entrada */
+  background: var(--warm-ivory); /* Fundo suave, como um campo de entrada */
   border: 1px solid var(--border-soft);
   border-bottom: 1.5px solid var(--gold); /* Apenas a base dourada */
   border-radius: var(--radius-md);
@@ -161,7 +162,7 @@ body {
 .venda-cta-bar .cta-icon {
   width: 38px;
   height: 38px;
-  border-radius: 8px; /* Pill suave, não círculo */
+  border-radius: var(--radius-lg); /* CORREÇÃO (regra 8.1): 8px excedia o limite de 6px; radius-lg preserva o efeito "pill suave" */
   background: linear-gradient(135deg, var(--gold), var(--gold-dark));
   display: flex;
   align-items: center;
@@ -224,7 +225,7 @@ body {
 /* Seta: surge com delay, como um "convite" */
 .venda-cta-bar .cta-arrow {
   margin-left: auto;
-  color: var(--gold);
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
   font-size: 1.2rem;
   opacity: 0;
   transform: translateX(-6px);
@@ -287,6 +288,12 @@ body {
   border-color: var(--gold);
   /* outline removido – a regra global *:focus-visible já cuida do foco acessível */
 }
+/* ADICIONADO (relatório §4.3/§6.3): estado de erro não existia no ficheiro */
+.input-field.error,
+.input-field.has-error {
+  border-color: var(--red);
+  background: var(--card-white);
+}
 .input-field::placeholder { color: var(--text-muted); }
 select.input-field {
   appearance: none;
@@ -327,11 +334,14 @@ select.input-field {
 .app-header .logo {
   font-family: var(--font-serif);
   font-size: 1.85rem;
-  font-weight: 800;
-  color: var(--gold);
-  letter-spacing: -.03em;
+  font-weight: 700; /* 800 → 700 para mais elegância */
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): --gold puro (2.10:1) falhava mesmo o limiar de texto grande; gold-dark cumpre 3.42:1 */
+  letter-spacing: -0.02em; /* -0.03em → -0.02em mais contido */
 }
-.app-header .logo span { color: var(--text-primary); font-weight: 800; }
+.app-header .logo span {
+  color: var(--text-primary);
+  font-weight: 700;
+}
 .app-header .store-name {
   font-size: .6rem;
   font-weight: 700;
@@ -350,7 +360,7 @@ select.input-field {
 }
 .app-header .plano-trial { background: #FEF6E0; color: #A7872B; }
 .app-header .plano-starter { background: #E6F4EC; color: #2C7A4D; }
-.app-header .plano-pro { background: var(--gold-light); color: var(--gold-dark); }
+.app-header .plano-pro { background: var(--gold-light); color: #836719; } /* CORREÇÃO (regra 8.9): gold-dark sobre gold-light era 3.17:1; este tom cumpre 4.97:1 */
 .app-header .plano-premium { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #fff; }
 .app-header .trial-countdown {
   font-size: .55rem;
@@ -525,21 +535,31 @@ select.input-field {
   letter-spacing: .06em;
   color: var(--text-secondary);
 }
-.kpi-card .kpi-value {
-  font-family: var(--font-sans);
+#caixa-saldo {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace !important;
+  font-size: 2.1rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  margin-top: 2px;
-  color: var(--text-primary);
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
+  margin: 4px 0 10px;
+  letter-spacing: -0.02em;
 }
 .kpi-card .kpi-sub {
   font-size: .62rem;
   color: var(--text-muted);
   margin-top: 4px;
 }
+/* ADICIONADO (relatório §3.2): valor numérico dos KPIs não tinha regra própria
+   e herdava a fonte Inter do body em vez de JetBrains Mono + tabular-nums */
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+/* Utilitário opcional (relatório §2.5): refinamento "Graphite" para o Ticket Médio */
+.kpi-value.graphite { color: #1F2937; }
 .kpi-card.gold-accent::before {
   content: '';
   position: absolute;
@@ -616,13 +636,13 @@ select.input-field {
 .list-item .info { flex: 1; min-width: 0; }
 .list-item .info .title {
   font-weight: 600;
-  font-size: .9rem;
+  font-size: .95rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .list-item .info .sub {
-  font-size: .7rem;
+  font-size: .75rem;
   color: var(--text-secondary);
   margin-top: 2px;
 }
@@ -716,7 +736,7 @@ select.input-field {
   border-radius: 50%;
   background: rgba(212, 175, 55, .15);
   transform: scale(0);
-  animation: rippleAnim 0.5s linear forwards;
+  animation: rippleAnim 0.4s linear forwards; /* CORREÇÃO (regra 8.6): 0.5s excedia o limite de 400ms para microinterações */
   pointer-events: none;
 }
 .btn-primary .ripple-effect,
@@ -822,10 +842,12 @@ select.input-field {
   margin: 0 auto 16px;
 }
 .modal-title {
-  font-family: 'Playfair Display', var(--font-serif);
-  font-size: 22px;
+  font-family: var(--font-serif);
+  font-size: 1.4rem; /* 22px → 1.4rem (22.4px) */
   font-weight: 600;
+  letter-spacing: -0.01em; /* Adicionado para elegância */
   margin-bottom: 16px;
+  color: var(--text-primary);
 }
 
 /* Modal centrado (Fase 1) */
@@ -956,7 +978,7 @@ select.input-field {
 .login-brand .logo {
   font-family: var(--font-serif);
   font-size: 3rem;
-  color: var(--gold);
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
   letter-spacing: -.02em;
 }
 .login-brand .logo span { color: var(--text-primary); }
@@ -983,7 +1005,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-size: .8rem;
   text-align: center;
   background: var(--bg-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-lg); /* Usamos radius-lg (6px) para um arredondamento suave, mantendo a precisão estrutural */
   padding: 4px;
   color: var(--text-secondary);
   font-weight: 600;
@@ -1068,7 +1090,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-family: var(--font-serif);
   font-size: 1.4rem;
   font-weight: 600;
-  color: var(--gold);
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo — antes dependia só do remendo !important mais abaixo */
   text-align: right;
 }
 .add-item-row {
@@ -1128,7 +1150,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-family: var(--font-serif);
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--gold);
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
   text-align: right;
 }
 .pagamento-badge {
@@ -1387,7 +1409,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .cart-total-row .ct-val { color: var(--gold-dark) !important; }
 .detalhe-total .val { color: var(--gold-dark) !important; }
 .revenue-detail-total { color: var(--gold-dark) !important; }
-.plano-pro { background: var(--gold-light); color: var(--gold-dark); }
+.plano-pro { background: var(--gold-light); color: #836719; } /* CORREÇÃO (regra 8.9): ver .app-header .plano-pro */
 ::placeholder {
   color: var(--neutral-500, #8C7E72) !important;
   opacity: 1;
@@ -1517,9 +1539,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .text-h3 { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
 .text-body-l { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; }
 .text-body-m { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
-.text-body-s { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 400; }
+.text-body-s { font-family: var(--font-sans); font-size: 12px; line-height: 18px; font-weight: 400; }
 .text-label-l { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-.text-label-m { font-family: var(--font-sans); font-size: 11px; line-height: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.text-label-m { font-family: var(--font-sans); font-size: 0.6875rem; line-height: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 .text-label-s { font-family: var(--font-sans); font-size: 10px; line-height: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
 .text-mono    { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 14px; line-height: 20px; font-weight: 500; }
 
@@ -1683,4 +1705,27 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   color: #D4AF37;
   line-height: 1;
   display: inline-block;
+}
+/* Títulos de secção — elegância consistente */
+.section-title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+/* Valores monetários e números com JetBrains Mono */
+#kpi-revenue,
+#kpi-ticket,
+#caixa-saldo,
+#caixa-fundo,
+.cart-total-row .ct-val,
+.detalhe-total .val,
+.list-item .action,
+.fecho-row .fr-val,
+.revenue-detail-total,
+#sucesso-valor {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
