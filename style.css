@@ -553,10 +553,20 @@ select.input-field {
    e herdava a fonte Inter do body em vez de JetBrains Mono + tabular-nums */
 .kpi-value {
   font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.2rem; /* Reforçado de 1.15rem — ainda seguro para "30.000 Kz" em ~122px de conteúdo */
+  font-weight: 700; /* Reforçado de 600 — peso 700 já vem no <link> de fontes; mono não altera largura */
   font-variant-numeric: tabular-nums;
+  line-height: 1.15; /* aperta o vertical para o número parecer mais "sólido" */
   color: var(--text-primary);
+  white-space: nowrap; /* impede a quebra de "Kz" para a linha seguinte */
+  overflow: hidden;
+  text-overflow: ellipsis; /* rede de segurança: valor futuro maior corta com "…" em vez de quebrar o cartão */
+  max-width: 100%;
+}
+/* Ticket Médio: cartão de largura dupla (span 2) tem folga para um valor "herói" maior */
+#kpi-ticket {
+  font-size: 1.6rem;
+  line-height: 1.1;
 }
 /* Utilitário opcional (relatório §2.5): refinamento "Graphite" para o Ticket Médio */
 .kpi-value.graphite { color: #1F2937; }
@@ -1683,26 +1693,38 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   font-family: var(--font-sans);
   font-size: 0.5rem; /* Tamanho original, pequeno e discreto */
   font-weight: 500;
-  color: #8C857A;
+  color: var(--text-muted); /* CORREÇÃO: #8C857A era o tom antigo já reprovado no WCAG AA (ver definição de --text-muted) */
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-top: 1px;
 }
-/* Ícone da seta (↑) mais visível e com "cabeça" definida */
-.kpi-trend .trend-up {
+/* Selo de tendência — estrutura comum + cor semântica por direção (sobe/desce) */
+.kpi-trend .trend-up,
+.kpi-trend .trend-down {
   font-family: var(--font-sans);
   font-size: 0.9rem;
   font-weight: 700;
-  color: #1F2937;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
   gap: 2px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
 }
-.kpi-trend .trend-up .trend-arrow {
+.kpi-trend .trend-up {
+  color: var(--green);
+  background: rgba(44, 122, 77, .10); /* --green a 10% */
+}
+.kpi-trend .trend-down {
+  color: var(--red);
+  background: rgba(179, 58, 74, .10); /* --red a 10% */
+}
+.kpi-trend .trend-up .trend-arrow,
+.kpi-trend .trend-down .trend-arrow {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #D4AF37;
+  color: currentColor;
   line-height: 1;
   display: inline-block;
 }
@@ -1724,6 +1746,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .list-item .action,
 .fecho-row .fr-val,
 .revenue-detail-total,
+.detalhe-item-row .sub,
 #sucesso-valor {
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-variant-numeric: tabular-nums;

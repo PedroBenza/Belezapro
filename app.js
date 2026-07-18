@@ -502,9 +502,11 @@ let variacao = 0;
 if (primeiro > 0) {
   variacao = ((ultimo - primeiro) / primeiro) * 100;
 }
-const sinal = variacao >= 0 ? '↑' : '↓';
+const subiu = variacao >= 0;
+const sinal = subiu ? '↑' : '↓';
 const percentEl = document.getElementById('ticket-trend-percent');
 if (percentEl) {
+  percentEl.className = subiu ? 'trend-up' : 'trend-down'; // CORREÇÃO: classe agora acompanha a direção real (antes ficava sempre "trend-up")
   percentEl.innerHTML = `<span class="trend-arrow">${sinal}</span> ${Math.abs(Math.round(variacao))}%`;
 }
 document.getElementById('ticket-trend-period').textContent = 'Últimos 7 dias';
@@ -1128,9 +1130,21 @@ let vendaAtual = null;// =======================================================
 function desenharSparkline(canvasId, dados, cor = '#D4AF37') {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  // CORREÇÃO: canvas sem escala para devicePixelRatio ficava borrado em ecrãs retina.
+  // O buffer interno passa a ser dpr×maior; o espaço lógico de desenho continua 84x28.
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.getBoundingClientRect().width || 84;
+  const cssHeight = canvas.getBoundingClientRect().height || 28;
+  const bufferW = Math.round(cssWidth * dpr);
+  const bufferH = Math.round(cssHeight * dpr);
+  if (canvas.width !== bufferW || canvas.height !== bufferH) {
+    canvas.width = bufferW;
+    canvas.height = bufferH;
+  }
   const ctx = canvas.getContext('2d');
-  const width = canvas.width;   // 84
-  const height = canvas.height; // 28
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const width = cssWidth;   // 84 (espaço lógico)
+  const height = cssHeight; // 28 (espaço lógico)
 
   ctx.clearRect(0, 0, width, height);
 
