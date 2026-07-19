@@ -662,6 +662,22 @@ function renderCaixa() {
   document.getElementById('caixa-saldo').textContent = fmtKz(state.config.fundo + entradas - despesas);
   document.getElementById('caixa-fundo').textContent = fmtKz(state.config.fundo);
 
+  // Variação do faturamento de hoje face a ontem, para o indicador junto ao saldo
+  const ontemStr = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+  const totalOntem = state.movimentos.filter(m => m.data === ontemStr && m.tipo === 'venda').reduce((s, m) => s + m.valor, 0);
+  const variacaoEl = document.getElementById('caixa-variacao');
+  if (variacaoEl) {
+    let variacao = 0;
+    if (totalOntem > 0) {
+      variacao = ((entradas - totalOntem) / totalOntem) * 100;
+    } else if (entradas > 0) {
+      variacao = 100;
+    }
+    const subiu = variacao >= 0;
+    variacaoEl.textContent = `${subiu ? '↑' : '↓'} ${Math.abs(Math.round(variacao))}%`;
+    variacaoEl.style.color = subiu ? 'var(--green)' : 'var(--red)';
+  }
+
   const periodo = state.histPeriodo;
   const movs = getMovimentosPeriodo(periodo).sort((a, b) => b.data.localeCompare(a.data) || b.hora.localeCompare(a.hora));
   const titulos = { hoje: 'Movimentos de Hoje', '7dias': 'Últimos 7 dias', '30dias': 'Últimos 30 dias', mes: 'Este Mês',

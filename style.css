@@ -536,13 +536,67 @@ select.input-field {
   color: var(--text-secondary);
 }
 #caixa-saldo {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace !important;
-  font-size: 2.1rem;
-  font-weight: 600;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace; /* !important removido — confirmado no index.html que já não há style inline a competir */
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
   margin: 4px 0 10px;
   letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ===== AÇÕES DA CAIXA (Despesa / Fundo / Fecho) ===== */
+.caixa-acao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--card-white);
+  box-shadow: var(--shadow-premium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-height: 48px;
+  text-align: center;
+}
+.caixa-acao:active {
+  transform: scale(0.96);
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-strong);
+}
+.caixa-acao svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+#add-despesa-btn svg { color: #1F2937; }
+#ajustar-fundo-btn svg { color: var(--gold-dark); }
+#fecho-caixa-btn svg { color: #1F2937; }
+
+/* ===== INDICADOR DE VARIAÇÃO (junto ao saldo) ===== */
+#caixa-variacao {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.caixa-variacao-sub {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
 }
 .kpi-card .kpi-sub {
   font-size: .62rem;
