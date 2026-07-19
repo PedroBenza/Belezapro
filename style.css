@@ -1800,4 +1800,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+}.app-header .logo-img {
+  height: 32px;
+  width: auto;
+  max-height: 40px;
+  display: block;
+  flex-shrink: 0;
 }

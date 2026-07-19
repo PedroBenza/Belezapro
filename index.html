@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
   <meta name="theme-color" content="#D4AF37">
-  <title>Belezagest — Gestão de Salão</title>
+  <title>BeautyPro — Gestão de Salão</title>
 
   <!-- CSP (Content Security Policy) -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://js-de.sentry-cdn.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://xbudnftutemakjbgxayf.supabase.co;">
@@ -104,9 +104,12 @@
       <header class="app-header" style="position:relative;">
         <div style="display:flex;flex-direction:column;gap:3px;padding-right:44px;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <div class="logo" style="flex-shrink:0;">Beleza<span>Pro</span></div>
-            <div class="store-name" id="store-name-display" title="Duplo clique para gerir profissionais" style="max-width:38vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Carregando...</div>
-          </div>
+  <img src="logo.png" alt="BeautyPro" class="logo-img">
+  <div class="logo" style="flex-shrink:0;font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:var(--gold-dark);">
+    Beauty<span style="color:var(--text-primary);">Pro</span>
+  </div>
+  <div class="store-name" id="store-name-display">Carregando...</div>
+</div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span class="plano-badge" id="plano-badge" style="flex-shrink:0;">TRIAL</span>
             <span class="trial-countdown" id="trial-countdown" style="display:none;flex-shrink:0;"></span>
