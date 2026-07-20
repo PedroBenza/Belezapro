@@ -316,6 +316,7 @@ select.input-field {
   position: relative;
   width: 100%;
 }
+
 .app-header {
   position: sticky;
   top: 0;
@@ -333,10 +334,10 @@ select.input-field {
 }
 .app-header .logo {
   font-family: var(--font-serif);
-  font-size: 1.85rem;
-  font-weight: 700; /* 800 → 700 para mais elegância */
-  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): --gold puro (2.10:1) falhava mesmo o limiar de texto grande; gold-dark cumpre 3.42:1 */
-  letter-spacing: -0.02em; /* -0.03em → -0.02em mais contido */
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold-dark);
+  letter-spacing: -0.02em;
 }
 .app-header .logo span {
   color: var(--text-primary);
@@ -536,13 +537,63 @@ select.input-field {
   color: var(--text-secondary);
 }
 #caixa-saldo {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace !important;
-  font-size: 2.1rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
-  margin: 4px 0 10px;
+  color: var(--gold-dark);
   letter-spacing: -0.02em;
+  line-height: 1.1;
+}/* ===== AÇÕES DA CAIXA ===== */
+.caixa-acao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--card-white);
+  box-shadow: var(--shadow-premium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-height: 48px;
+  text-align: center;
+}
+.caixa-acao:active {
+  transform: scale(0.96);
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-strong);
+}
+.caixa-acao svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+#add-despesa-btn svg { color: #1F2937; }
+#ajustar-fundo-btn svg { color: var(--gold-dark); }
+#fecho-caixa-btn svg { color: #1F2937; }
+
+#caixa-variacao {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.caixa-variacao-sub {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
 }
 .kpi-card .kpi-sub {
   font-size: .62rem;
@@ -814,9 +865,7 @@ select.input-field {
   color: var(--gold-dark);
 }
 .pill.green { background: #E6F4EC; color: var(--green); }
-.pill.gray { background: var(--bg-soft); color: var(--text-muted); }
-
-/* ===== MODAIS ===== */
+.pill.gray { background: var(--bg-soft); color: var(--text-muted); }/* ===== MODAIS ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -853,9 +902,9 @@ select.input-field {
 }
 .modal-title {
   font-family: var(--font-serif);
-  font-size: 1.4rem; /* 22px → 1.4rem (22.4px) */
+  font-size: 1.4rem;
   font-weight: 600;
-  letter-spacing: -0.01em; /* Adicionado para elegância */
+  letter-spacing: -0.01em;
   margin-bottom: 16px;
   color: var(--text-primary);
 }
@@ -987,8 +1036,8 @@ select.input-field {
 .login-brand { text-align: center; margin-bottom: 32px; }
 .login-brand .logo {
   font-family: var(--font-serif);
-  font-size: 3rem;
-  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
+  font-size: 2.2rem;
+  color: var(--gold-dark);
   letter-spacing: -.02em;
 }
 .login-brand .logo span { color: var(--text-primary); }
@@ -1015,7 +1064,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-size: .8rem;
   text-align: center;
   background: var(--bg-soft);
-  border-radius: var(--radius-lg); /* Usamos radius-lg (6px) para um arredondamento suave, mantendo a precisão estrutural */
+  border-radius: var(--radius-lg);
   padding: 4px;
   color: var(--text-secondary);
   font-weight: 600;
@@ -1100,7 +1149,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-family: var(--font-serif);
   font-size: 1.4rem;
   font-weight: 600;
-  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo — antes dependia só do remendo !important mais abaixo */
+  color: var(--gold-dark);
   text-align: right;
 }
 .add-item-row {
@@ -1160,7 +1209,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-family: var(--font-serif);
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
+  color: var(--gold-dark);
   text-align: right;
 }
 .pagamento-badge {
@@ -1248,9 +1297,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   font-size: 1rem;
   color: var(--gold-dark);
   flex-shrink: 0;
-}
-
-/* ===== IA ===== */
+}/* ===== IA ===== */
 .ia-chat {
   max-height: 280px;
   overflow-y: auto;
@@ -1290,65 +1337,168 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   border: 1px solid var(--gold-light);
 }
 .ia-limite {
-  font-size: .65rem;
+  font-size: .55rem;
   color: var(--text-muted);
-  text-align: center;
+  text-align: right;
   margin-top: 6px;
 }
 
 /* ============================================================
    BENZA AI — cabeçalho, resumo, sugestões, insights
    ============================================================ */
-.ia-header { position: relative; margin-bottom: 14px; }
+.ia-header { position: relative; margin-bottom: 12px; }
 .ia-header-title {
   font-family: var(--font-serif);
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 .ia-header-title span { color: var(--gold-dark); }
-.ia-header-sub { font-size: .78rem; color: var(--text-secondary); margin-top: 2px; }
+.ia-header-sub { font-size: .74rem; color: var(--text-secondary); margin-top: 1px; }
 .ia-header-mark {
-  width: 44px; height: 44px; border-radius: var(--radius-full);
-  background: var(--gold-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(20,17,15,.10));
 }
-.ia-status-line { font-size: .72rem; color: var(--text-secondary); margin-top: 8px; display: flex; align-items: center; gap: 6px; }
-.ia-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; box-shadow: 0 0 0 3px var(--green-50); }
+.ia-status-line {
+  font-size: .68rem; color: var(--text-secondary); margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-soft); border-radius: var(--radius-full); padding: 4px 10px 4px 8px;
+}
+.ia-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block;
+  box-shadow: 0 0 0 3px var(--green-50); animation: iaStatusPulse 2.4s ease-in-out infinite;
+}
+@keyframes iaStatusPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 .ia-status-sep { color: var(--border-soft); }
-
-.ia-resumo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.ia-resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
 .ia-resumo-card {
-  background: var(--card-white); border: 1px solid var(--border-soft); border-radius: var(--radius-md);
-  box-shadow: var(--shadow-premium); padding: 10px 8px;
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-premium);
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
-.ia-resumo-icone {
-  width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--gold-50);
-  display: flex; align-items: center; justify-content: center; margin-bottom: 6px;
+/* Força ícone e rótulo na mesma linha */
+.ia-resumo-card .ia-resumo-icone {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--gold-50);
+  display: inline-flex; /* ← muda para inline-flex para ficar ao lado do texto */
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 4px;
+  vertical-align: middle;
 }
-.ia-resumo-label { font-size: .62rem; color: var(--text-secondary); margin-bottom: 2px; }
-.ia-resumo-valor { font-family: var(--font-mono); font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); letter-spacing: -0.01em; }
-.ia-resumo-sub { font-size: .6rem; color: var(--text-muted); margin-top: 2px; }
-
-#ia-chat-empty { text-align: center; padding: 18px 8px; }
-.ia-chat-empty-title { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.ia-chat-empty-sub { font-size: .78rem; color: var(--text-secondary); }
+.ia-resumo-card .ia-resumo-icone svg {
+  width: 11px;
+  height: 11px;
+  stroke: var(--gold-dark) !important; /* força a cor dourada */
+  fill: none;
+}
+/* Agrupa ícone e rótulo na mesma linha */
+.ia-resumo-card .ia-resumo-label {
+  display: inline;
+  font-size: .55rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+  vertical-align: middle;
+}
+/* Valor e subtítulo continuam em baixo */
+.ia-resumo-card .ia-resumo-valor {
+  font-family: var(--font-mono);
+  font-size: .88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.ia-resumo-card .ia-resumo-sub {
+  font-size: .55rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+#ia-chat-empty { text-align: center; padding: 10px 8px; }
+.ia-chat-empty-title { font-family: var(--font-serif); font-size: .95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+.ia-chat-empty-sub { font-size: .74rem; color: var(--text-secondary); }
 
 .ia-input-row {
-  display: flex; align-items: center; gap: 8px; background: var(--bg-soft);
-  border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 6px 10px; margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-full);
+  padding: 4px 4px 4px 12px;
+  margin-top: 6px;
+  width: 100%;
 }
-.ia-input-exemplo { font-size: .68rem; color: var(--text-muted); margin: 6px 2px 0; }
-
-.ia-sugestoes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+.ia-input-row .input-field {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: .8rem;
+  background: transparent;
+  border: none;
+  min-width: 0;
+}
+.ia-input-row .input-field:focus {
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.ia-input-row .btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-size: .75rem;
+  min-height: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+}
+.ia-input-exemplo {
+  font-size: .65rem;
+  color: var(--text-muted);
+  margin: 5px 2px 0;
+  text-align: left;
+}
+.ia-limite {
+  font-size: .6rem;
+  color: var(--text-muted);
+  text-align: left;
+  margin-top: 6px;
+}
+.ia-sugestoes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 6px; }
 .ia-sugestao-card {
-  display: flex; align-items: center; gap: 8px; padding: 10px 10px; text-align: left;
+  display: flex; align-items: center; gap: 7px; padding: 8px 8px; text-align: left;
   background: var(--card-white); border: 1px solid var(--border-soft); border-radius: var(--radius-md);
   box-shadow: var(--shadow-premium); cursor: pointer; transition: var(--transition);
-  font-family: var(--font-sans); font-size: .78rem; font-weight: 600; color: var(--text-primary);
+  font-family: var(--font-sans); font-size: .74rem; font-weight: 600; color: var(--text-primary);
 }
 .ia-sugestao-card:active { background: var(--bg-soft); box-shadow: var(--shadow-strong); transform: scale(0.98); }
-.ia-sugestao-card svg { width: 16px; height: 16px; color: var(--gold-dark); flex-shrink: 0; }
+.ia-sugestao-icone {
+  width: 24px; height: 24px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ia-sugestao-icone svg { width: 13px; height: 13px; }
+.ia-sug-green { background: var(--green-50); color: var(--green); }
+.ia-sug-gold { background: var(--gold-50); color: var(--gold-dark); }
+.ia-sug-graphite { background: var(--neutral-75); color: var(--text-secondary); }
 
 .ia-msg-bot-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
 .ia-msg-bot-nome { font-family: var(--font-serif); font-size: .82rem; font-weight: 700; color: var(--text-primary); }
@@ -1492,13 +1642,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 }
 
 /* ===== CORREÇÃO DE CONTRASTE ===== */
-/* CORREÇÃO (limpeza): .ct-val e .val já declaram var(--gold-dark) na própria regra base
-   (linhas ~1099/1159) desde a regra 8.9 — os remendos !important abaixo ficaram mortos e foram removidos.
-   #kpi-revenue e .revenue-detail-total mantêm a cor; o !important saiu por não ser necessário
-   (ID já vence .kpi-value por especificidade; .revenue-detail-total não tem regra concorrente). */
 #kpi-revenue { color: var(--gold-dark); }
 .revenue-detail-total { color: var(--gold-dark); }
-.plano-pro { background: var(--gold-light); color: #836719; } /* CORREÇÃO (regra 8.9): ver .app-header .plano-pro */
+.plano-pro { background: var(--gold-light); color: #836719; }
 ::placeholder {
   color: var(--neutral-500, #8C7E72) !important;
   opacity: 1;
@@ -1606,7 +1752,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   --space-18: 72px;
   --space-24: 96px;
 
-  /* Border-radius (especificação) */
   --radius-sm:   3px;
   --radius-md:   4px;
   --radius-lg:   6px;
@@ -1659,12 +1804,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
     --shadow-strong:  0 16px 40px rgba(0,0,0,.45);
     --gold-light:     rgba(212,175,55,.20);
     --gold-dark:      var(--gold-300);
-    /* Ajuste do CTA Venda para escuro (sobrescreve a cor de fundo) */
     --venda-cta-bg:   var(--neutral-700);
     --venda-cta-border: var(--neutral-600);
     --venda-cta-text: var(--neutral-100);
   }
-  /* CTA Venda no dark mode */
   .venda-cta-bar {
     background: var(--venda-cta-bg);
     border-color: var(--venda-cta-border);
@@ -1685,13 +1828,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .venda-cta-bar .cta-arrow {
     color: var(--neutral-500);
   }
-  /* Splash mantém-se na identidade de marca */
   #splash-screen { background: linear-gradient(145deg, var(--gold-700), var(--gold-500), var(--gold-700)) !important; }
 }
-
-/* CORREÇÃO (limpeza — duplicação apontada no relatório): o bloco "VALORES MONETÁRIOS EM FONTE MONO !important"
-   foi removido daqui. Os seus 7 seletores já estavam cobertos pela regra global no fim do ficheiro
-   (mesma font-family, sem !important, e é a última regra da cascata — nenhuma mudança visual). */
 
 /* ===== SPLASH SCREEN — ANIMAÇÕES ===== */
 @keyframes splashLogo {
@@ -1708,7 +1846,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 @keyframes splashTagline {
   0%   { opacity:0; transform:translateY(6px); }
   100% { opacity:1; transform:translateY(0); }
-}/* ============================================================
+}
+
+/* ============================================================
    KPI TICKET MÉDIO — SPARKLINE PREMIUM (Refinado)
    ============================================================ */
 
@@ -1763,14 +1903,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 .kpi-trend .trend-period {
   font-family: var(--font-sans);
-  font-size: 0.5rem; /* Tamanho original, pequeno e discreto */
+  font-size: 0.5rem;
   font-weight: 500;
-  color: var(--text-muted); /* CORREÇÃO: #8C857A era o tom antigo já reprovado no WCAG AA (ver definição de --text-muted) */
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-top: 1px;
 }
-/* Selo de tendência — estrutura comum + cor semântica por direção (sobe/desce) */
 .kpi-trend .trend-up,
 .kpi-trend .trend-down {
   font-family: var(--font-sans);
@@ -1786,11 +1925,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 }
 .kpi-trend .trend-up {
   color: var(--green);
-  background: rgba(44, 122, 77, .10); /* --green a 10% */
+  background: rgba(44, 122, 77, .10);
 }
 .kpi-trend .trend-down {
   color: var(--red);
-  background: rgba(179, 58, 74, .10); /* --red a 10% */
+  background: rgba(179, 58, 74, .10);
 }
 .kpi-trend .trend-up .trend-arrow,
 .kpi-trend .trend-down .trend-arrow {
@@ -1800,7 +1939,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   line-height: 1;
   display: inline-block;
 }
-/* Títulos de secção — elegância consistente */
 .section-title {
   font-family: var(--font-serif);
   font-size: 1.05rem;
@@ -1808,7 +1946,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   letter-spacing: -0.01em;
   color: var(--text-primary);
 }
-/* Valores monetários e números com JetBrains Mono */
 #kpi-revenue,
 #kpi-ticket,
 #caixa-saldo,

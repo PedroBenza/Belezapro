@@ -78,7 +78,7 @@
   <div id="login-view" class="view active">
     <div class="login-brand">
       <div class="logo" style="display:flex;align-items:center;justify-content:center;gap:8px;">
-        <img src="logo.png" alt="BeautyPro" style="height:34px;width:auto;">
+        <img src="logo.png" alt="BeautyPro" style="height:60px;width:auto;">
         Beauty<span>Pro</span>
       </div>
       <p>Gestão simples e offline para o seu salão</p>
@@ -259,39 +259,52 @@
         </div>
 
         <!-- CAIXA -->
-        <div id="tab-caixa" class="tab-pane">
-          <div class="tab-inner">
-            <div class="card card-highlight mb-3">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-                <div>
-                  <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);">Saldo do Dia</div>
-                  <div style="font-size:.6rem;color:var(--text-muted);">Entradas − Despesas + Fundo</div>
-                </div>
-                <div style="text-align:right;font-size:.62rem;color:var(--text-muted);">
-                  Fundo: <span id="caixa-fundo" style="font-weight:700;color:var(--gold);">0 Kz</span>
-                </div>
-              </div>
-              <div style="font-family:var(--font-serif);font-size:2.1rem;font-weight:600;color:var(--gold);margin:4px 0 10px;" id="caixa-saldo">0 Kz</div>
-              <div style="display:flex;gap:8px;flex-wrap:nowrap;">
-                <button class="btn btn-sm btn-secondary" id="add-despesa-btn" data-role="admin,gerente" data-role-mode="disable" style="flex:1;min-width:0;white-space:nowrap;">💸 Despesa</button>
-                <button class="btn btn-sm btn-secondary" id="ajustar-fundo-btn" style="flex:1;min-width:0;white-space:nowrap;">✏️ Fundo</button>
-                <button class="btn btn-sm btn-secondary" id="fecho-caixa-btn" data-role="admin" data-role-mode="disable" style="flex:1;min-width:0;white-space:nowrap;">📋 Fecho</button>
-              </div>
-            </div>
-            <div class="hist-filter" id="hist-filter">
-              <button class="hist-chip active" data-periodo="hoje">Hoje</button>
-              <button class="hist-chip" data-periodo="7dias">7 dias</button>
-              <button class="hist-chip" data-periodo="30dias">30 dias</button>
-              <button class="hist-chip" data-periodo="mes">Este mês</button>
-              <button class="hist-chip" data-periodo="tudo">Tudo</button>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;" id="hist-titulo">Movimentos de Hoje</span>
-              <span style="font-size:.7rem;color:var(--text-muted);">Toque para detalhes</span>
-            </div>
-            <div id="movimentos-list"></div>
-          </div>
+<div id="tab-caixa" class="tab-pane">
+  <div class="tab-inner">
+    <div class="card card-highlight mb-3">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);">Saldo Disponível</span>
+        <span style="font-size:.6rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Fundo: <span id="caixa-fundo" style="font-weight:700;color:var(--gold-dark);">0 Kz</span>
+        </span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 12px;">
+        <span id="caixa-saldo">0 Kz</span>
+        <div style="text-align:right;">
+          <div id="caixa-variacao">↑ 0%</div>
+          <div class="caixa-variacao-sub">Comparado com ontem</div>
         </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <button class="caixa-acao" id="add-despesa-btn" data-role="admin,gerente" data-role-mode="disable">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>Despesa</span>
+        </button>
+        <button class="caixa-acao" id="ajustar-fundo-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <span>Fundo</span>
+        </button>
+        <button class="caixa-acao" id="fecho-caixa-btn" data-role="admin" data-role-mode="disable">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Fecho</span>
+        </button>
+      </div>
+    </div>
+    <div class="hist-filter" id="hist-filter">
+      <button class="hist-chip active" data-periodo="hoje">Hoje</button>
+      <button class="hist-chip" data-periodo="7dias">7 dias</button>
+      <button class="hist-chip" data-periodo="30dias">30 dias</button>
+      <button class="hist-chip" data-periodo="mes">Este mês</button>
+      <button class="hist-chip" data-periodo="tudo">Tudo</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;" id="hist-titulo">Movimentos de Hoje</span>
+      <span style="font-size:.7rem;color:var(--text-muted);">Toque para detalhes</span>
+    </div>
+    <div id="movimentos-list"></div>
+  </div>
+</div>
 
         <!-- EQUIPA -->
         <div id="tab-equipa" class="tab-pane" data-role="admin,gerente">
@@ -321,9 +334,7 @@
                   <div class="ia-header-title">Benza <span>AI</span></div>
                   <div class="ia-header-sub">Seu consultor inteligente de gestão</div>
                 </div>
-                <div class="ia-header-mark" aria-hidden="true">
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold-dark)" stroke-width="1.6"><path d="M6 3h12M6 21h12M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </div>
+                <img src="logo.png" alt="" aria-hidden="true" class="ia-header-mark">
               </div>
               <div class="ia-status-line">
                 <span class="ia-status-dot"></span> Online <span class="ia-status-sep">|</span> Sempre pronta para analisar o seu negócio.
@@ -332,26 +343,51 @@
             </div>
 
             <div class="ia-resumo-grid">
-              <div class="ia-resumo-card">
-                <div class="ia-resumo-icone" style="color:var(--gold-dark);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 18 8.5 10.5 13.5 15.5 23 6"/><polyline points="17 6 23 6 23 12"/></svg></div>
-                <div class="ia-resumo-label">Faturamento hoje</div>
-                <div class="ia-resumo-valor" id="ia-resumo-fat">0 Kz</div>
-                <div class="ia-resumo-sub" id="ia-resumo-fat-trend">—</div>
-              </div>
-              <div class="ia-resumo-card">
-                <div class="ia-resumo-icone" style="color:var(--gold-dark);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-                <div class="ia-resumo-label">Clientes</div>
-                <div class="ia-resumo-valor" id="ia-resumo-clientes">0</div>
-                <div class="ia-resumo-sub" id="ia-resumo-clientes-sub">—</div>
-              </div>
-              <div class="ia-resumo-card">
-                <div class="ia-resumo-icone" style="color:var(--gold-dark);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-                <div class="ia-resumo-label">Agendamentos</div>
-                <div class="ia-resumo-valor" id="ia-resumo-ag">0</div>
-                <div class="ia-resumo-sub" id="ia-resumo-ag-sub">—</div>
-              </div>
-            </div>
+  <div class="ia-resumo-card">
+    <div class="ia-resumo-header">
+      <div class="ia-resumo-icone" style="color:var(--gold-dark);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 18 8.5 10.5 13.5 15.5 23 6"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+      </div>
+      <div class="ia-resumo-label">Faturado/hoje</div>
+    </div>
+    <div class="ia-resumo-valor" id="ia-resumo-fat">0 Kz</div>
+    <div class="ia-resumo-sub" id="ia-resumo-fat-trend">—</div>
+  </div>
 
+  <div class="ia-resumo-card">
+    <div class="ia-resumo-header">
+      <div class="ia-resumo-icone" style="color:var(--gold-dark);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="ia-resumo-label">Clientes</div>
+    </div>
+    <div class="ia-resumo-valor" id="ia-resumo-clientes">0</div>
+    <div class="ia-resumo-sub" id="ia-resumo-clientes-sub">—</div>
+  </div>
+
+  <div class="ia-resumo-card">
+    <div class="ia-resumo-header">
+      <div class="ia-resumo-icone" style="color:var(--gold-dark);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div class="ia-resumo-label">Agendamentos</div>
+    </div>
+    <div class="ia-resumo-valor" id="ia-resumo-ag">0</div>
+    <div class="ia-resumo-sub" id="ia-resumo-ag-sub">—</div>
+  </div>
+</div>
             <div class="card" style="padding:16px;position:relative;">
               <div id="ia-onboarding" style="display:none;text-align:center;padding:8px 4px 4px;">
                 <div style="font-size:1.8rem;margin-bottom:8px;">👋</div>
@@ -396,27 +432,27 @@
             <div style="margin:14px 0 8px;font-weight:600;font-size:.8rem;">Sugestões rápidas</div>
             <div class="ia-sugestoes-grid">
               <button class="ia-sugestao-card" data-pergunta="Qual foi a minha receita hoje?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 18 8.5 10.5 13.5 15.5 23 6"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span class="ia-sugestao-icone ia-sug-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 18 8.5 10.5 13.5 15.5 23 6"/><polyline points="17 6 23 6 23 12"/></svg></span>
                 <span>Receita hoje</span>
               </button>
               <button class="ia-sugestao-card" data-pergunta="Quem são os meus clientes VIP?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="ia-sugestao-icone ia-sug-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
                 <span>Clientes VIP</span>
               </button>
               <button class="ia-sugestao-card" data-pergunta="Qual é o meu serviço mais vendido?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>
+                <span class="ia-sugestao-icone ia-sug-graphite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg></span>
                 <span>Serviço campeão</span>
               </button>
               <button class="ia-sugestao-card" data-pergunta="O que tenho agendado para amanhã?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span class="ia-sugestao-icone ia-sug-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
                 <span>Agenda amanhã</span>
               </button>
               <button class="ia-sugestao-card" data-pergunta="Como está o fluxo de caixa?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                <span class="ia-sugestao-icone ia-sug-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
                 <span>Fluxo de Caixa</span>
               </button>
               <button class="ia-sugestao-card" data-pergunta="Qual é o meu ticket médio?">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 18 23 18 23 12"/></svg>
+                <span class="ia-sugestao-icone ia-sug-graphite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 18 23 18 23 12"/></svg></span>
                 <span>Ticket Médio</span>
               </button>
             </div>

@@ -660,7 +660,23 @@ function renderCaixa() {
   const entradas = state.movimentos.filter(m => m.data === hojeStr && m.tipo === 'venda').reduce((s, m) => s + m.valor, 0);
   const despesas = state.movimentos.filter(m => m.data === hojeStr && m.tipo === 'despesa').reduce((s, m) => s + m.valor, 0);
   document.getElementById('caixa-saldo').textContent = fmtKz(state.config.fundo + entradas - despesas);
-  document.getElementById('caixa-fundo').textContent = fmtKz(state.config.fundo);
+  document.getElementById('caixa-fundo').textContent = fmtKz(state.config.fundo);// Variação do faturamento de hoje face a ontem
+const dOntem = new Date();
+dOntem.setDate(dOntem.getDate() - 1);
+const ontemStr = dOntem.getFullYear() + '-' + String(dOntem.getMonth() + 1).padStart(2, '0') + '-' + String(dOntem.getDate()).padStart(2, '0');
+const totalOntem = state.movimentos.filter(m => m.data === ontemStr && m.tipo === 'venda').reduce((s, m) => s + m.valor, 0);
+const variacaoEl = document.getElementById('caixa-variacao');
+if (variacaoEl) {
+  let variacao = 0;
+  if (totalOntem > 0) {
+    variacao = ((entradas - totalOntem) / totalOntem) * 100;
+  } else if (entradas > 0) {
+    variacao = 100;
+  }
+  const subiu = variacao >= 0;
+  variacaoEl.textContent = `${subiu ? '↑' : '↓'} ${Math.abs(Math.round(variacao))}%`;
+  variacaoEl.style.color = subiu ? 'var(--green)' : 'var(--red)';
+}
 
   const periodo = state.histPeriodo;
   const movs = getMovimentosPeriodo(periodo).sort((a, b) => b.data.localeCompare(a.data) || b.hora.localeCompare(a.hora));
@@ -2483,7 +2499,7 @@ function renderIAResumo() {
   });
   const inativos = Object.entries(ultimaCompraPorCliente).filter(([nome, data]) => Math.floor((hojeD - new Date(data + 'T00:00:00')) / 86400000) > 30).length;
   if (inativos > 0) {
-    insights.push({ icone: 'user', cor: 'var(--gold-dark)',
+    insights.push({ icone: 'user', cor: 'var(--text-secondary)',
       texto: inativos === 1 ? `Existe <strong>1 cliente</strong> que não regressa há mais de 30 dias.` : `Existem <strong>${inativos} clientes</strong> que não regressam há mais de 30 dias.` });
   }
 
@@ -2521,7 +2537,7 @@ function renderIAResumo() {
   const amanha = new Date(hojeD); amanha.setDate(hojeD.getDate() + 1);
   const amanhaStr = amanha.toISOString().split('T')[0];
   const agAmanha = state.agendamentos.filter(a => a.data === amanhaStr && a.status !== 'cancelado');
-  insights.push({ icone: 'calendar', cor: 'var(--gold-dark)',
+  insights.push({ icone: 'calendar', cor: 'var(--text-secondary)',
     texto: agAmanha.length > 0 ? `Amanhã tem <strong>${agAmanha.length} ${agAmanha.length === 1 ? 'agendamento' : 'agendamentos'}</strong> marcados.` : `Ainda não há agendamentos para amanhã.` });
 
   const iconesSvg = {
@@ -2533,7 +2549,8 @@ function renderIAResumo() {
   };
   const listaEl = document.getElementById('ia-insights-list');
   if (listaEl) {
-    listaEl.innerHTML = insights.map(ins => `<div class="ia-insight-row"><span class="ia-insight-icone" style="color:${ins.cor}">${iconesSvg[ins.icone]}</span><span>${ins.texto}</span></div>`).join('')
+    const bgPorCor = { 'var(--green)': 'var(--green-50)', 'var(--red)': 'var(--red-50)', 'var(--gold-dark)': 'var(--gold-50)', 'var(--text-secondary)': 'var(--neutral-75)' };
+    listaEl.innerHTML = insights.map(ins => `<div class="ia-insight-row"><span class="ia-insight-icone" style="color:${ins.cor};background:${bgPorCor[ins.cor] || 'var(--neutral-75)'}">${iconesSvg[ins.icone]}</span><span>${ins.texto}</span></div>`).join('')
       || '<div class="ia-insight-row"><span>Ainda sem dados suficientes para gerar insights.</span></div>';
   }
 }
