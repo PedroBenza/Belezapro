@@ -91,15 +91,36 @@ async function flushSyncQueue() {
         await supabaseUpsert(op.tabela, op.payload);
       }
     } catch (err) {
+      // ================================================================
+      // CORREÇÃO OFFLINE: SESSION_EXPIRED só é tratado se estiver online.
+      // Se estiver offline, não faz logout — apenas adia a operação.
+      // ================================================================
       if (err.message === 'SESSION_EXPIRED') {
-        restantes.push(op);
-        for (let j = i + 1; j < q.length; j++) {
-          restantes.push(q[j]);
+        if (navigator.onLine) {
+          // Online: sessão expirada → força logout e interrompe a fila
+          restantes.push(op);
+          for (let j = i + 1; j < q.length; j++) {
+            restantes.push(q[j]);
+          }
+          saveSyncQueue(restantes);
+          await supabaseClient.auth.signOut();
+          interrompido = true;
+          break;
+        } else {
+          // Offline: não faz logout, apenas adia a operação
+          console.warn('[flushSyncQueue] SESSION_EXPIRED offline — adiando operação.');
+          op.attempts = (op.attempts || 0) + 1;
+          if (op.attempts >= MAX_ATTEMPTS) {
+            op.failed = true;
+            itensFalhos.push(op.id || 'item');
+            restantes.push(op);
+          } else {
+            const delay = Math.min(Math.pow(2, op.attempts) * 1000, 60000) + Math.random() * 1000;
+            op.nextRetry = Date.now() + delay;
+            restantes.push(op);
+          }
+          continue;
         }
-        saveSyncQueue(restantes);
-        await supabaseClient.auth.signOut();
-        interrompido = true;
-        break;
       }
 
       op.attempts = (op.attempts || 0) + 1;
@@ -161,4 +182,4 @@ dbDelete = async function(store, id) {
   } else {
     addToSyncQueue(tabela, 'delete', { id });
   }
-};  
+};
