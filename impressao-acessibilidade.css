@@ -1,0 +1,96 @@
+/* ====================================================================
+   impressao-acessibilidade.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Impressão térmica, focus visible, correção de contraste, reduced motion
+   Linhas originais: 1592-1682
+   ==================================================================== */
+/* ===== IMPRESSÃO TÉRMICA ===== */
+#recibo-print { display: none; }
+@media print {
+  * { visibility: hidden !important; }
+  #recibo-print, #recibo-print * { visibility: visible !important; }
+  @page { size: 58mm auto; margin: 0; }
+  body { margin: 0; padding: 0; background: #fff; }
+  #recibo-print {
+    visibility: visible !important;
+    display: block !important;
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    width: 58mm;
+    padding: 4mm 3mm 6mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 8pt;
+    line-height: 1.35;
+    color: #000;
+    background: #fff;
+    word-break: break-word;
+    overflow: hidden;
+  }
+  #recibo-print .r-store { font-size: 11pt; font-weight: bold; text-align: center; letter-spacing: .5px; margin-bottom: 1mm; }
+  #recibo-print .r-sub { font-size: 7pt; text-align: center; color: #444; }
+  #recibo-print .r-num { font-size: 7pt; text-align: center; color: #666; margin-bottom: 1mm; }
+  #recibo-print .r-div { border: none; border-top: 1px dashed #000; margin: 2mm 0; }
+  #recibo-print .r-meta { font-size: 7.5pt; margin: .5mm 0; }
+  #recibo-print .r-th { display: flex; justify-content: space-between; font-size: 7pt; font-weight: bold; padding-bottom: 1mm; border-bottom: 1px solid #000; }
+  #recibo-print .r-th-desc { flex: 1; }
+  #recibo-print .r-th-qty { width: 16px; text-align: right; }
+  #recibo-print .r-th-sub { width: 40px; text-align: right; }
+  #recibo-print .r-item { display: flex; justify-content: space-between; align-items: flex-start; font-size: 7.5pt; padding: .8mm 0; border-bottom: 1px dotted #ccc; }
+  #recibo-print .r-item-name { flex: 1; padding-right: 2mm; }
+  #recibo-print .r-item-qty { width: 16px; text-align: right; white-space: nowrap; }
+  #recibo-print .r-item-sub { width: 40px; text-align: right; white-space: nowrap; }
+  #recibo-print .r-total { font-size: 10pt; font-weight: bold; text-align: right; margin-top: 1.5mm; }
+  #recibo-print .r-pag { font-size: 7pt; text-align: right; color: #444; margin-top: .5mm; }
+  #recibo-print .r-footer { font-size: 7pt; text-align: center; color: #555; margin-top: 2mm; }
+  #recibo-print .r-footer strong { display: block; font-size: 8pt; margin-bottom: .5mm; }
+}
+
+/* ===== FOCUS VISIBLE ===== */
+*:focus-visible {
+  outline: 2px solid var(--gold) !important;
+  outline-offset: 2px !important;
+  border-color: var(--gold) !important;
+}
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--gold) !important;
+}
+
+/* ===== CORREÇÃO DE CONTRASTE ===== */
+#kpi-revenue { color: var(--gold-dark); }
+.revenue-detail-total { color: var(--gold-dark); }
+.plano-pro { background: var(--gold-light); color: #836719; }
+::placeholder {
+  color: var(--neutral-500, #8C7E72) !important;
+  opacity: 1;
+}
+
+/* ===== PREFERS REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+  }
+  .ripple-effect { display: none !important; }
+  .btn:active { transform: none !important; }
+  .kpi-pulse { animation: none !important; }
+  .modal-sheet { animation: none !important; transform: translateY(0) !important; }
+  .toast { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .venda-cta-bar:active { filter: none !important; }
+  .list-item {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .cart-item-row.adding, .cart-item-row.removing {
+    animation: none !important;
+  }
+  #success-circle, #success-check {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+

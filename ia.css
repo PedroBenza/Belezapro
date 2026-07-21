@@ -1,0 +1,199 @@
+/* ====================================================================
+   ia.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Benza AI: cabeçalho, resumo, sugestões, insights, chat
+   Linhas originais: 1346-1539
+   ==================================================================== */
+/* ============================================================
+   BENZA AI — cabeçalho, resumo, sugestões, insights
+   ============================================================ */
+.ia-header { position: relative; margin-bottom: 12px; }
+.ia-header-title {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.ia-header-title span { color: var(--gold-dark); }
+.ia-header-sub { font-size: .74rem; color: var(--text-secondary); margin-top: 1px; }
+.ia-header-mark {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(20,17,15,.10));
+}
+.ia-status-line {
+  font-size: .68rem; color: var(--text-secondary); margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-soft); border-radius: var(--radius-full); padding: 4px 10px 4px 8px;
+}
+.ia-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block;
+  box-shadow: 0 0 0 3px var(--green-50); animation: iaStatusPulse 2.4s ease-in-out infinite;
+}
+@keyframes iaStatusPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.ia-status-sep { color: var(--border-soft); }
+.ia-resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ia-resumo-card {
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-premium);
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+/* Força ícone e rótulo na mesma linha */
+.ia-resumo-card .ia-resumo-icone {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--gold-50);
+  display: inline-flex; /* ← muda para inline-flex para ficar ao lado do texto */
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.ia-resumo-card .ia-resumo-icone svg {
+  width: 11px;
+  height: 11px;
+  stroke: var(--gold-dark) !important; /* força a cor dourada */
+  fill: none;
+}
+/* Agrupa ícone e rótulo na mesma linha */
+.ia-resumo-card .ia-resumo-label {
+  display: inline;
+  font-size: .55rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+  vertical-align: middle;
+}
+/* Valor e subtítulo continuam em baixo */
+.ia-resumo-card .ia-resumo-valor {
+  font-family: var(--font-mono);
+  font-size: .88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+.ia-resumo-card .ia-resumo-sub {
+  font-size: .55rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+#ia-chat-empty { text-align: center; padding: 10px 8px; }
+.ia-chat-empty-title { font-family: var(--font-serif); font-size: .95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+.ia-chat-empty-sub { font-size: .74rem; color: var(--text-secondary); }
+
+.ia-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-full);
+  padding: 4px 4px 4px 12px;
+  margin-top: 6px;
+  width: 100%;
+}
+.ia-input-row .input-field {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: .8rem;
+  background: transparent;
+  border: none;
+  min-width: 0;
+}
+.ia-input-row .input-field:focus {
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.ia-input-row .btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-size: .75rem;
+  min-height: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+}
+.ia-input-exemplo {
+  font-size: .65rem;
+  color: var(--text-muted);
+  margin: 5px 2px 0;
+  text-align: left;
+}
+.ia-limite {
+  font-size: .6rem;
+  color: var(--text-muted);
+  text-align: left;
+  margin-top: 6px;
+}
+.ia-sugestoes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 6px; }
+.ia-sugestao-card {
+  display: flex; align-items: center; gap: 7px; padding: 8px 8px; text-align: left;
+  background: var(--card-white); border: 1px solid var(--border-soft); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-premium); cursor: pointer; transition: var(--transition);
+  font-family: var(--font-sans); font-size: .74rem; font-weight: 600; color: var(--text-primary);
+}
+.ia-sugestao-card:active { background: var(--bg-soft); box-shadow: var(--shadow-strong); transform: scale(0.98); }
+.ia-sugestao-icone {
+  width: 24px; height: 24px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ia-sugestao-icone svg { width: 13px; height: 13px; }
+.ia-sug-green { background: var(--green-50); color: var(--green); }
+.ia-sug-gold { background: var(--gold-50); color: var(--gold-dark); }
+.ia-sug-graphite { background: var(--neutral-75); color: var(--text-secondary); }
+
+.ia-msg-bot-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.ia-msg-bot-nome { font-family: var(--font-serif); font-size: .82rem; font-weight: 700; color: var(--text-primary); }
+.ia-msg-bot-tempo { font-size: .62rem; color: var(--text-muted); }
+.ia-msg-bot-corpo { font-size: .85rem; color: var(--text-primary); line-height: 1.5; white-space: pre-line; }
+.ia-msg-bot-acoes { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.ia-feedback-btn {
+  font-size: .65rem; padding: 4px 8px; background: var(--card-white); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-full); color: var(--text-secondary); cursor: pointer; transition: var(--transition);
+}
+.ia-feedback-btn:disabled { opacity: .55; cursor: default; }
+.ia-followup-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-soft); }
+.ia-followup-chip {
+  font-size: .68rem; padding: 5px 10px; background: var(--card-white); border: 1px solid var(--gold-100);
+  border-radius: var(--radius-full); color: var(--gold-dark); font-weight: 600; cursor: pointer; transition: var(--transition);
+}
+.ia-followup-chip:active { background: var(--gold-50); }
+
+.ia-insight-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; font-size: .78rem; color: var(--text-primary); line-height: 1.4; border-bottom: 1px solid var(--bg-soft); }
+.ia-insight-row:last-child { border-bottom: none; }
+.ia-insight-row strong { font-weight: 700; }
+.ia-insight-icone { width: 22px; height: 22px; border-radius: var(--radius-full); background: var(--bg-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.ia-insight-icone svg { width: 13px; height: 13px; }
+#ia-offline-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(4px);
+  border-radius: var(--radius-sm);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  z-index: 10;
+}
+

@@ -1,0 +1,114 @@
+/* ====================================================================
+   design-tokens-extra.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Tokens estendidos da Fase 3 (paleta neutra e dourada completa)
+   Linhas originais: 1683-1791
+   ==================================================================== */
+/* ============================================================
+   FASE 3 — DESIGN SYSTEM TOKENS E UTILITÁRIOS
+   ============================================================ */
+
+/* ---- PALETA DE CORES ---- */
+:root {
+  --gold-50:   #FFFBEB;
+  --gold-100:  #FEF6D0;
+  --gold-200:  #FBE89A;
+  --gold-300:  #F7D45A;
+  --gold-400:  #E8C030;
+  --gold-500:  #D4AF37;
+  --gold-600:  #B8961F;
+  --gold-700:  #A7872B;
+  --gold-800:  #8A6E1C;
+  --gold-900:  #6B5214;
+
+  --neutral-0:   #FFFFFF;
+  --neutral-25:  #FCFBFA;
+  --neutral-50:  #F3F2EF;
+  --neutral-75:  #ECE9E4;
+  --neutral-100: #DCD5C9;
+  --neutral-200: #C7BDAF;
+  --neutral-300: #ADA090;
+  --neutral-400: #948673;
+  --neutral-500: #766A5C;
+  --neutral-600: #5C564E;
+  --neutral-700: #423E38;
+  --neutral-800: #2A241E;
+  --neutral-900: #17140F;
+
+  --green-50:  #E6F4EC;
+  --green-100: #C4E6D1;
+  --green-400: #48BB78;
+  --green-500: #2C7A4D;
+  --green-600: #236040;
+  --green-700: #1A4830;
+
+  --red-50:  #FDE8E8;
+  --red-100: #FAC5C5;
+  --red-400: #E05C5C;
+  --red-500: #B33A4A;
+  --red-600: #922F3B;
+  --red-700: #72232C;
+
+  --amber-50:  #FEF6E0;
+  --amber-100: #FDE8A8;
+  --amber-400: #F5B800;
+  --amber-500: #D4960A;
+  --amber-700: #A7872B;
+
+  --blue-50:  #EEF4FD;
+  --blue-100: #C3D9F7;
+  --blue-500: #3B82F6;
+  --blue-700: #1D4ED8;
+
+  --space-0:  0px;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-18: 72px;
+  --space-24: 96px;
+
+  --radius-sm:   3px;
+  --radius-md:   4px;
+  --radius-lg:   6px;
+  --radius-full: 9999px;
+
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(28,26,24,.04), 0 1px 4px rgba(28,26,24,.03);
+  --elevation-2: 0 2px 8px rgba(28,26,24,.06), 0 1px 3px rgba(28,26,24,.04);
+  --elevation-3: 0 8px 24px rgba(28,26,24,.08), 0 2px 8px rgba(28,26,24,.04);
+  --elevation-4: 0 16px 40px rgba(28,26,24,.10), 0 4px 12px rgba(28,26,24,.06);
+}
+
+/* ---- CLASSES UTILITÁRIAS DE TIPOGRAFIA ---- */
+.text-display-xl { font-family: var(--font-serif); font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -0.03em; }
+.text-display-l  { font-family: var(--font-serif); font-size: 24px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.text-display-m  { font-family: var(--font-serif); font-size: 20px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; }
+.text-h1 { font-family: var(--font-sans); font-size: 18px; line-height: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.text-h2 { font-family: var(--font-sans); font-size: 16px; line-height: 22px; font-weight: 600; }
+.text-h3 { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
+.text-body-l { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; }
+.text-body-m { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.text-body-s { font-family: var(--font-sans); font-size: 12px; line-height: 18px; font-weight: 400; }
+.text-label-l { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.text-label-m { font-family: var(--font-sans); font-size: 0.6875rem; line-height: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.text-label-s { font-family: var(--font-sans); font-size: 10px; line-height: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; }
+.text-mono    { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 14px; line-height: 20px; font-weight: 500; }
+
+.text-gold-dark   { color: var(--gold-700) !important; }
+.text-gold        { color: var(--gold-500) !important; }
+.text-gold-light  { color: var(--gold-300) !important; }
+.text-neutral-600 { color: var(--neutral-600) !important; }
+.text-neutral-700 { color: var(--neutral-700) !important; }
+.text-neutral-900 { color: var(--neutral-900) !important; }
+.text-success     { color: var(--green-500) !important; }
+.text-danger      { color: var(--red-500) !important; }
+.text-warning     { color: var(--amber-500) !important; }
+

@@ -16,16 +16,7 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ====================================================================
 let logoutVoluntarioEmCurso = false;
 supabaseClient.auth.onAuthStateChange((event, session) => {
-  // ================================================================
-  // CORREÇÃO OFFLINE: se estiver offline e receber SIGNED_OUT,
-  // NÃO força logout — o token expirou mas não há como verificar.
-  // ================================================================
   if (event === 'SIGNED_OUT' && !logoutVoluntarioEmCurso) {
-    if (!navigator.onLine) {
-      // Offline: ignorar silenciosamente (a sessão mantém-se)
-      console.warn('[Auth] SIGNED_OUT recebido offline — ignorado.');
-      return;
-    }
     // Sessão perdida sem ter sido o utilizador a pedir — expirou ou foi revogada.
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
     document.getElementById('app-view').style.display = 'none';
@@ -35,49 +26,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
   logoutVoluntarioEmCurso = false;
 });
 
-// ================================================================
-//  CHAVE LOCAL PARA GUARDAR A SESSÃO (mesma que o Supabase usa)
-// ================================================================
-const AUTH_STORAGE_KEY = 'sb-xbudnftutemakjbgxayf-auth-token';
-
-function getLocalSession() {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch { return null; }
-}
-
 async function checkSession() {
-  // ================================================================
-  // CORREÇÃO OFFLINE: se estiver offline, usa sessão guardada localmente
-  // sem tentar validar com o servidor.
-  // ================================================================
-  if (!navigator.onLine) {
-    const localSession = getLocalSession();
-    if (localSession && localSession.access_token) {
-      // Restaurar a sessão no cliente Supabase (opcional, mas útil)
-      // O Supabase já tem a sessão em memória, mas forçamos a restauração
-      // para garantir que os headers funcionem.
-      document.getElementById('login-view').style.display = 'none';
-      document.getElementById('app-view').style.display = 'flex';
-      // Carregar estado sem sincronizar (offline)
-      await loadState(false);
-      if (typeof ativarAbaAtiva === 'function') ativarAbaAtiva();
-      aplicarPermissoes();
-      toast('Modo offline — sessão restaurada localmente.', 'success');
-      return;
-    } else {
-      // Sem sessão local, fica no login
-      document.getElementById('login-view').style.display = 'flex';
-      document.getElementById('app-view').style.display = 'none';
-      return;
-    }
-  }
-
-  // ================================================================
-  //  FLUXO ONLINE (original)
-  // ================================================================
   try {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
@@ -109,6 +58,9 @@ async function checkSession() {
       if (typeof carregarHistoricoIA === 'function') carregarHistoricoIA();
       aplicarPermissoes();
       if (!localStorage.getItem('bp_onboarding_seen')) {
+        // ============================================================
+        // CORREÇÃO: remover splash manualmente (sem depender de hideSplash)
+        // ============================================================
         const splash = document.getElementById('splash-screen');
         if (splash) {
           splash.style.opacity = '0';
@@ -132,24 +84,6 @@ async function checkSession() {
 }
 
 async function getAuthHeaders() {
-  // ================================================================
-  // CORREÇÃO OFFLINE: se estiver offline, usa o token guardado localmente
-  // sem validar com o servidor.
-  // ================================================================
-  if (!navigator.onLine) {
-    const localSession = getLocalSession();
-    if (!localSession || !localSession.access_token) {
-      throw new Error('SESSION_EXPIRED');
-    }
-    return {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${localSession.access_token}`
-    };
-  }
-
-  // ================================================================
-  //  FLUXO ONLINE (original)
-  // ================================================================
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session || !session.access_token) {
     throw new Error('SESSION_EXPIRED');
@@ -185,10 +119,7 @@ async function garantirSalaoRemoto() {
     }
   } catch (err) {
     if (err.message === 'SESSION_EXPIRED') {
-      // Se estiver offline, não faz logout
-      if (navigator.onLine) {
-        await supabaseClient.auth.signOut();
-      }
+      await supabaseClient.auth.signOut();
       return;
     }
   }
@@ -270,11 +201,16 @@ document.getElementById('login-btn').addEventListener('click', async function() 
     toast('Bem-vindo(a), ' + profile.nome + '!', 'success');
     if (typeof carregarHistoricoIA === 'function') carregarHistoricoIA();
     aplicarPermissoes();
+    // Onboarding (Fase 2)
     if (!localStorage.getItem('bp_onboarding_seen')) {
+      // ============================================================
+      // CORREÇÃO: remover splash manualmente
+      // ============================================================
       const splash = document.getElementById('splash-screen');
       if (splash) { splash.style.display = 'none'; }
       const onbEl = document.getElementById('onboarding-screen');
       onbEl.style.display = 'flex';
+      // Bloqueia toques nos primeiros 500ms
       onbEl.style.pointerEvents = 'none';
       setTimeout(() => { onbEl.style.pointerEvents = 'auto'; }, 500);
       showOnboardingSlide(0);

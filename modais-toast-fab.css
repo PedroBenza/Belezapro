@@ -1,0 +1,166 @@
+/* ====================================================================
+   modais-toast-fab.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Modais, toast e botão flutuante (FAB)
+   Linhas originais: 868-1028
+   ==================================================================== */
+.pill.gray { background: var(--bg-soft); color: var(--text-muted); }/* ===== MODAIS ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 26, 24, .35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2000;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-sheet {
+  background: var(--card-white);
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 16px));
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-strong);
+  animation: slideUp .35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-sheet .handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-soft);
+  border-radius: 4px;
+  margin: 0 auto 16px;
+}
+.modal-title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+/* Modal centrado (Fase 1) */
+.modal-confirm-sheet {
+  background: var(--card-white);
+  width: 88%;
+  max-width: 380px;
+  border-radius: var(--radius-md);
+  padding: 32px 24px 24px;
+  box-shadow: var(--shadow-strong);
+  animation: confirmIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  margin: auto;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 16px));
+}
+@keyframes confirmIn {
+  from { opacity: 0; transform: scale(0.92) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-overlay#modal-confirm {
+  align-items: center;
+  justify-content: center;
+  background: rgba(28,26,24,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.modal-overlay#modal-confirm.open { display: flex; }
+.confirm-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  display: block;
+}
+.confirm-title {
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.confirm-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+.confirm-actions .btn { min-height: 48px; font-size: 0.9rem; }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text-primary);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: .8rem;
+  font-weight: 600;
+  z-index: 3000;
+  opacity: 0;
+  transition: all .35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 90vw;
+  box-shadow: var(--shadow-strong);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+.toast.warning { background: #A7872B; }
+
+/* ===== FAB ===== */
+.fab {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, .22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  transition: var(--transition);
+  z-index: 400;
+  touch-action: manipulation;
+}
+.fab.fab-scrolling {
+  opacity: .35;
+  transform: scale(.8);
+  pointer-events: none;
+}
+.fab::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: -1;
+}
+.fab:active { opacity: .85; box-shadow: 0 4px 12px rgba(212, 175, 55, .18); }
+

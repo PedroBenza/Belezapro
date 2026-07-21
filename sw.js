@@ -1,4 +1,4 @@
-// sw.js — Service Worker do BelezaPro
+// sw.js — Service Worker do BeautyPro
 //
 // Objetivo único: fazer cache do "app shell" (o próprio HTML, o manifest,
 // os ícones, e as bibliotecas externas de que a app depende) para que,
@@ -8,12 +8,25 @@
 // service worker não mexe nisso, só garante que o ficheiro da app em si
 // carrega offline.
 
-const CACHE_NAME = 'belezapro-shell-v4';
+const CACHE_NAME = 'beautypro-shell-v5';
 
 const APP_SHELL = [
   './',
   './index.html',
-  './style.css',
+  './base-variaveis.css',
+  './componentes-base.css',
+  './layout-nav-tabs.css',
+  './kpis-caixa-listas.css',
+  './menus-agenda.css',
+  './modais-toast-fab.css',
+  './login-carrinho-venda.css',
+  './historico-fecho-equipa.css',
+  './ia.css',
+  './plano-filtros-grafico.css',
+  './impressao-acessibilidade.css',
+  './design-tokens-extra.css',
+  './dark-mode.css',
+  './splash-sparkline.css',
   './core-constants.js',
   './core-utils.js',
   './core-state.js',
@@ -21,11 +34,23 @@ const APP_SHELL = [
   './auth-supabase.js',
   './sync-queue.js',
   './sync-rest.js',
-  './app.js',
+  './plano-limites.js',
+  './crud-operations.js',
+  './ui-render-dashboard-agenda.js',
+  './ui-render-clientes-caixa-equipa.js',
+  './chart-module.js',
+  './vendas-modais.js',
+  './detalhes-acessibilidade.js',
+  './ui-events-navegacao.js',
+  './eventos-cadastros.js',
+  './eventos-caixa-vendas.js',
+  './eventos-globais.js',
+  './ia-module.js',
   './main.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './logo.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   'https://js-de.sentry-cdn.com/3036c354ac820ced1c3ea8a8c8737481.min.js',
 ];

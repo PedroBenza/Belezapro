@@ -1,0 +1,135 @@
+/* ====================================================================
+   splash-sparkline.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Animações da splash screen e sparkline premium do ticket médio
+   Linhas originais: 1834-1963
+   ==================================================================== */
+/* ===== SPLASH SCREEN — ANIMAÇÕES ===== */
+@keyframes splashLogo {
+  0%   { opacity: 0; transform: scale(.4) rotate(-14deg); }
+  55%  { opacity: 1; transform: scale(1.1) rotate(4deg); }
+  75%  { transform: scale(.96) rotate(-2deg); }
+  90%  { transform: scale(1.02) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes splashGlow {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(255,255,255,.45)); }
+  50%      { filter: drop-shadow(0 0 22px rgba(255,255,255,.85)); }
+}
+@keyframes splashTagline {
+  0%   { opacity:0; transform:translateY(6px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+
+/* ============================================================
+   KPI TICKET MÉDIO — SPARKLINE PREMIUM (Refinado)
+   ============================================================ */
+
+.kpi-card .kpi-main-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.kpi-card .kpi-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.kpi-card .kpi-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 0px;
+  margin-top: 2px;
+}
+
+.sparkline-wrapper {
+  height: 28px;
+  width: 84px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 0px;
+}
+
+.sparkline-wrapper canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.kpi-trend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.kpi-trend .trend-period {
+  font-family: var(--font-sans);
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+.kpi-trend .trend-up,
+.kpi-trend .trend-down {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+.kpi-trend .trend-up {
+  color: var(--green);
+  background: rgba(44, 122, 77, .10);
+}
+.kpi-trend .trend-down {
+  color: var(--red);
+  background: rgba(179, 58, 74, .10);
+}
+.kpi-trend .trend-up .trend-arrow,
+.kpi-trend .trend-down .trend-arrow {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: currentColor;
+  line-height: 1;
+  display: inline-block;
+}
+.section-title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+#kpi-revenue,
+#kpi-ticket,
+#caixa-saldo,
+#caixa-fundo,
+.cart-total-row .ct-val,
+.detalhe-total .val,
+.list-item .action,
+.fecho-row .fr-val,
+.revenue-detail-total,
+.detalhe-item-row .sub,
+#sucesso-valor {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}

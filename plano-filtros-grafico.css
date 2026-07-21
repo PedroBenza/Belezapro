@@ -1,0 +1,57 @@
+/* ====================================================================
+   plano-filtros-grafico.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Cartão de plano, filtros de clientes, aviso de plano e gráfico
+   Linhas originais: 1540-1591
+   ==================================================================== */
+/* ===== PLANO CARD ===== */
+.plano-card {
+  border: 2px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: var(--transition);
+  cursor: default;
+  background: var(--card-white);
+  margin-bottom: 12px;
+}
+.plano-card.destaque { border-color: var(--gold); background: var(--gold-light); }
+.plano-card .preco {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+
+/* ===== FILTROS CLIENTES ===== */
+.filtro-frequencia.active {
+  background: var(--gold) !important;
+  color: #fff !important;
+  border-color: var(--gold) !important;
+}
+
+/* ===== AVISO PLANO ===== */
+#plano-aviso {
+  background: var(--gold-light);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+
+/* ===== GRÁFICO ===== */
+.chart-tooltip {
+  position: fixed;
+  background: var(--text-primary);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: .65rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+  z-index: 9999;
+}
+

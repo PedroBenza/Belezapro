@@ -1,0 +1,124 @@
+/* ====================================================================
+   historico-fecho-equipa.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Filtro de histórico, fecho de caixa e profissionais
+   Linhas originais: 1227-1345
+   ==================================================================== */
+/* ===== HISTÓRICO FILTRO ===== */
+.hist-filter {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 8px;
+  scrollbar-width: none;
+}
+.hist-filter::-webkit-scrollbar { display: none; }
+.hist-chip {
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border-soft);
+  background: var(--card-white);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+}
+.hist-chip.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+/* ===== FECHO DE CAIXA ===== */
+.fecho-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: .88rem;
+}
+.fecho-row .fr-label { color: var(--text-secondary); }
+.fecho-row .fr-val { font-weight: 600; text-align: right; }
+.fecho-row.total-row {
+  border-top: 2px solid var(--text-primary);
+  border-bottom: none;
+  padding-top: 12px;
+  margin-top: 4px;
+}
+.fecho-row.total-row .fr-label { font-weight: 700; font-size: .95rem; color: var(--text-primary); }
+.fecho-row.total-row .fr-val {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  color: var(--green);
+  text-align: right;
+}
+
+/* ===== PROFISSIONAIS ===== */
+/* Mantido .prof-card (código morto) por compatibilidade com versões antigas, sem impacto */
+.prof-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-premium);
+}
+.prof-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold-dark);
+  flex-shrink: 0;
+}/* ===== IA ===== */
+.ia-chat {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: var(--bg-soft);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+}
+.ia-dots span {
+  opacity: 0;
+  animation: iaDotFade 1.2s infinite;
+}
+.ia-dots span:nth-child(2) { animation-delay: .2s; }
+.ia-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes iaDotFade {
+  0%, 60%, 100% { opacity: 0; }
+  30% { opacity: 1; }
+}
+.ia-msg-user {
+  background: var(--card-white);
+  padding: 8px 12px;
+  border-radius: 6px 6px 2px 6px;
+  margin: 4px 0 8px;
+  max-width: 85%;
+  align-self: flex-end;
+  border: 1px solid var(--border-soft);
+}
+.ia-msg-bot {
+  background: var(--gold-light);
+  padding: 10px 12px;
+  border-radius: 6px 6px 6px 2px;
+  margin: 4px 0 8px;
+  max-width: 100%;
+  align-self: stretch;
+  border: 1px solid var(--gold-light);
+}
+.ia-limite {
+  font-size: .55rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 6px;
+}
+

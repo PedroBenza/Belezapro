@@ -1,0 +1,47 @@
+/* ====================================================================
+   dark-mode.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Modo escuro (prefers-color-scheme)
+   Linhas originais: 1792-1833
+   ==================================================================== */
+/* ============================================================
+   FASE 6 — DARK MODE (prefers-color-scheme)
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-soft:        var(--neutral-900);
+    --card-white:     var(--neutral-800);
+    --text-primary:   var(--neutral-50);
+    --text-secondary: var(--neutral-300);
+    --text-muted:     var(--neutral-400);
+    --border-soft:    var(--neutral-700);
+    --shadow-premium: 0 8px 30px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.25);
+    --shadow-strong:  0 16px 40px rgba(0,0,0,.45);
+    --gold-light:     rgba(212,175,55,.20);
+    --gold-dark:      var(--gold-300);
+    --venda-cta-bg:   var(--neutral-700);
+    --venda-cta-border: var(--neutral-600);
+    --venda-cta-text: var(--neutral-100);
+  }
+  .venda-cta-bar {
+    background: var(--venda-cta-bg);
+    border-color: var(--venda-cta-border);
+  }
+  .venda-cta-bar:active {
+    background: var(--neutral-600);
+  }
+  .venda-cta-bar .cta-icon {
+    background: rgba(212,175,55,0.25);
+    color: var(--gold-400);
+  }
+  .venda-cta-bar .cta-text .cta-main {
+    color: var(--venda-cta-text);
+  }
+  .venda-cta-bar .cta-text .cta-sub {
+    color: var(--neutral-400);
+  }
+  .venda-cta-bar .cta-arrow {
+    color: var(--neutral-500);
+  }
+  #splash-screen { background: linear-gradient(145deg, var(--gold-700), var(--gold-500), var(--gold-700)) !important; }
+}
+

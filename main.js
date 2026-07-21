@@ -2,18 +2,22 @@
 //  INICIALIZAÇÃO (extraído do app.js na Fase A da modularização)
 //  Carregado por último — depende de tudo o resto já estar definido.
 //
-//  DEPENDÊNCIAS EXTERNAS (globais, definidas em app.js — Opção B,
-//  sem import/export; ver BelezaPro_PLANO_TECNICO para o porquê):
-//    - state                     → app.js (linha ~661)
-//    - openDB()                  → app.js (linha ~538)
-//    - checkSession()            → app.js (linha ~33)
-//    - hideSplash()              → app.js (linha ~2958)
-//    - atualizarIAOffline()      → app.js (linha ~2011)
-//    - aplicarAcessibilidade()   → app.js (linha ~1935)
+//  DEPENDÊNCIAS EXTERNAS (globais, sem import/export; ver
+//  BelezaPro_PLANO_TECNICO para o porquê):
+//    - state                     → core-state.js
+//    - openDB()                  → db-indexeddb.js
+//    - checkSession()            → auth-supabase.js
+//    - hideSplash()              → ia-module.js
+//    - atualizarIAOffline()      → detalhes-acessibilidade.js
+//    - aplicarAcessibilidade()   → detalhes-acessibilidade.js
 //    - toast()                   → core-utils.js
 //
-//  Se qualquer uma destas for movida ou renomeada numa fase futura de
-//  modularização (Fase B/C), atualizar esta lista.
+//  CORREÇÃO (Fase C — divisão do app.js em 12 módulos): esta lista
+//  referia todas as 6 dependências a "app.js"; 3 delas (state, openDB,
+//  checkSession) nunca estiveram lá — já estava desatualizada antes
+//  da divisão. As outras 3 estavam certas e ficaram obsoletas agora.
+//  Se qualquer uma destas for movida ou renomeada no futuro, atualizar
+//  esta lista.
 // ====================================================================
 document.addEventListener('DOMContentLoaded', async function init() {
   // Garantir estado inicial da UI
@@ -85,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async function init() {
   // Acessibilidade
   setTimeout(aplicarAcessibilidade, 600);
 
-  console.log('✅ BelezaPro inicializado com sucesso!');
+  console.log('✅ BeautyPro inicializado com sucesso!');
 
   // ✅ Ponto 2 — Sincronização periódica a cada 30 segundos
   setInterval(() => {

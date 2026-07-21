@@ -1,0 +1,216 @@
+/* ====================================================================
+   kpis-caixa-listas.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: KPIs do resumo, ações da Caixa e itens de lista
+   Linhas originais: 512-722
+   ==================================================================== */
+/* ===== KPIs ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-premium);
+  position: relative;
+  overflow: hidden;
+  min-height: 88px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.kpi-card:active { opacity: .85; }
+.kpi-card .kpi-label {
+  font-size: .6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+}
+#caixa-saldo {
+  font-family: var(--font-mono);
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-dark);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}/* ===== AÇÕES DA CAIXA ===== */
+.caixa-acao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--card-white);
+  box-shadow: var(--shadow-premium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-height: 48px;
+  text-align: center;
+}
+.caixa-acao:active {
+  transform: scale(0.96);
+  background: var(--bg-soft);
+  box-shadow: var(--shadow-strong);
+}
+.caixa-acao svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+#add-despesa-btn svg { color: #1F2937; }
+#ajustar-fundo-btn svg { color: var(--gold-dark); }
+#fecho-caixa-btn svg { color: #1F2937; }
+
+#caixa-variacao {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.caixa-variacao-sub {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+.kpi-card .kpi-sub {
+  font-size: .62rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+/* ADICIONADO (relatório §3.2): valor numérico dos KPIs não tinha regra própria
+   e herdava a fonte Inter do body em vez de JetBrains Mono + tabular-nums */
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: 1.2rem; /* Reforçado de 1.15rem — ainda seguro para "30.000 Kz" em ~122px de conteúdo */
+  font-weight: 700; /* Reforçado de 600 — peso 700 já vem no <link> de fontes; mono não altera largura */
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15; /* aperta o vertical para o número parecer mais "sólido" */
+  color: var(--text-primary);
+  white-space: nowrap; /* impede a quebra de "Kz" para a linha seguinte */
+  overflow: hidden;
+  text-overflow: ellipsis; /* rede de segurança: valor futuro maior corta com "…" em vez de quebrar o cartão */
+  max-width: 100%;
+}
+/* Ticket Médio: cartão de largura dupla (span 2) tem folga para um valor "herói" maior */
+#kpi-ticket {
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+/* Utilitário opcional (relatório §2.5): refinamento "Graphite" para o Ticket Médio */
+.kpi-value.graphite { color: #1F2937; }
+.kpi-card.gold-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+}
+.kpi-card.green-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--green);
+}
+@keyframes kpiPulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.kpi-pulse { animation: kpiPulse .4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ===== LIST ITEMS ===== */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-premium);
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: listItemIn 0.15s ease-out forwards;
+}
+.list-item:nth-child(1) { animation-delay: 0.02s; }
+.list-item:nth-child(2) { animation-delay: 0.06s; }
+.list-item:nth-child(3) { animation-delay: 0.10s; }
+.list-item:nth-child(4) { animation-delay: 0.14s; }
+.list-item:nth-child(5) { animation-delay: 0.18s; }
+.list-item:nth-child(6) { animation-delay: 0.22s; }
+.list-item:nth-child(7) { animation-delay: 0.26s; }
+.list-item:nth-child(8) { animation-delay: 0.30s; }
+.list-item:nth-child(9) { animation-delay: 0.34s; }
+.list-item:nth-child(10) { animation-delay: 0.38s; }
+.list-item:nth-child(n+11) { animation-delay: 0.40s; }
+@keyframes listItemIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.list-item:active { background: var(--bg-soft); }
+.list-item .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--gold-dark);
+  flex-shrink: 0;
+}
+.list-item .info { flex: 1; min-width: 0; }
+.list-item .info .title {
+  font-weight: 600;
+  font-size: .95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.list-item .info .sub {
+  font-size: .75rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.list-item .action {
+  font-weight: 700;
+  font-size: .8rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 60px;
+}
+.list-item .actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}

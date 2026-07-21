@@ -1,0 +1,252 @@
+/* ====================================================================
+   componentes-base.css — extraído do style.css (Fase C da modularização)
+   Conteúdo: Botões, CTA de venda, cards e inputs
+   Linhas originais: 59-305
+   ==================================================================== */
+/* ===== BOTÕES ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: .9rem;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: var(--transition);
+  touch-action: manipulation;
+  min-height: 48px;
+  height: 52px;
+  position: relative;
+}
+.btn:active { opacity: .8; }
+.btn:disabled { opacity: .5; pointer-events: none; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, .22);
+}
+.btn-primary:active { box-shadow: 0 2px 8px rgba(212, 175, 55, .12); }
+.btn-secondary {
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-premium);
+}
+.btn-secondary:active { background: var(--bg-soft); }
+.btn-success {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(44, 122, 77, .2);
+}
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+}
+.btn-sm {
+  padding: 6px 16px;
+  font-size: .75rem;
+  min-height: 36px;
+  height: 40px;
+}
+.btn-block { width: 100%; justify-content: center; }
+
+.btn-xs { height: 32px; padding: 0 12px; font-size: 12px; min-height: 32px; }
+.btn-lg { height: 60px; padding: 0 32px; font-size: 16px; min-height: 60px; }
+.btn-xl { height: 68px; padding: 0 40px; font-size: 18px; min-height: 68px; }
+
+.btn.is-loading {
+  pointer-events: none;
+  opacity: 0.85;
+  position: relative;
+  color: transparent !important;
+}
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  top: calc(50% - 11px);
+  left: calc(50% - 11px);
+}
+.btn-success.is-loading::after { border-top-color: #fff; }
+.btn-secondary.is-loading::after { border-top-color: var(--text-primary); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== CTA VENDA — "A PALAVRA DE OURO" (Branding Tipográfico) ===== */
+.venda-cta-bar {
+  background: var(--warm-ivory); /* Fundo suave, como um campo de entrada */
+  border: 1px solid var(--border-soft);
+  border-bottom: 1.5px solid var(--gold); /* Apenas a base dourada */
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin: 0 16px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 0 rgba(20, 17, 15, 0.03);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  text-align: left;
+  width: auto;
+}
+
+/* Ao tocar, o fundo escurece ligeiramente e a borda dourada fica mais forte */
+.venda-cta-bar:active {
+  background: #F3F0EC;
+  border-bottom-color: var(--gold-dark);
+  transform: translateY(1px);
+}
+
+/* Ícone: pill dourado com "+" (estilo Linear/Notion) */
+.venda-cta-bar .cta-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg); /* CORREÇÃO (regra 8.1): 8px excedia o limite de 6px; radius-lg preserva o efeito "pill suave" */
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #FFFFFF;
+  font-size: 1.4rem;
+  font-weight: 300;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
+  transition: transform 0.15s ease;
+}
+
+.venda-cta-bar:active .cta-icon {
+  transform: scale(0.94);
+}
+
+/* Texto: "Registar" neutro, "Venda" em dourado (branding puro) */
+.venda-cta-bar .cta-text .cta-main {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* A palavra "Venda" — o herói da ação */
+.venda-cta-bar .cta-text .cta-main .gold-word {
+  color: var(--gold-dark);
+  font-weight: 800;
+  position: relative;
+}
+
+/* Sublinhado dourado apenas na palavra "Venda" (marcador de luxo) */
+.venda-cta-bar .cta-text .cta-main .gold-word::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.venda-cta-bar:active .cta-text .cta-main .gold-word::after {
+  opacity: 1;
+  height: 3px;
+}
+
+/* Subtexto: alinhado e limpo */
+.venda-cta-bar .cta-text .cta-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+/* Seta: surge com delay, como um "convite" */
+.venda-cta-bar .cta-arrow {
+  margin-left: auto;
+  color: var(--gold-dark); /* CORREÇÃO (regra 8.9): ver .app-header .logo */
+  font-size: 1.2rem;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.4s ease 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+
+/* A seta aparece quando o CTA é carregado (após 0.5s) e desliza para a posição */
+.venda-cta-bar .cta-arrow.visible {
+  opacity: 0.6;
+  transform: translateX(0);
+}
+
+/* Ao tocar, a seta avança com mais força */
+.venda-cta-bar:active .cta-arrow {
+  transform: translateX(6px);
+  opacity: 1;
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--card-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-premium);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.card:active { box-shadow: var(--shadow-premium); }
+.card-highlight {
+  background: linear-gradient(135deg, var(--gold-light), var(--card-white));
+  border-color: var(--gold);
+}
+
+/* ===== INPUTS ===== */
+.input-group { margin-bottom: 16px; }
+.input-label {
+  display: block;
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.input-field {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  background: var(--bg-soft);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: var(--transition);
+  outline: none;
+}
+/* CORREÇÃO: removido outline duplicado para evitar dois anéis de foco */
+.input-field:focus {
+  background: var(--card-white);
+  border-color: var(--gold);
+  /* outline removido – a regra global *:focus-visible já cuida do foco acessível */
+}
+/* ADICIONADO (relatório §4.3/§6.3): estado de erro não existia no ficheiro */
+.input-field.error,
+.input-field.has-error {
+  border-color: var(--red);
+  background: var(--card-white);
+}
+.input-field::placeholder { color: var(--text-muted); }
+select.input-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6560' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
