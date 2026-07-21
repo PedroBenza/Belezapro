@@ -615,93 +615,127 @@
       </div>
     </div>
   </div>
+<!-- VENDA (ORDEM: Cliente → Serviço + Valor fixo → Profissional → Adicionar) -->
+<div id="modal-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="venda-title">
+  <div class="modal-sheet">
+    <div class="handle"></div>
+    <div id="venda-title" class="modal-title">💰 Nova Venda</div>
 
-  <!-- VENDA (CORRIGIDO: removida opção "Cliente não identificado") -->
-  <div id="modal-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="venda-title">
-    <div class="modal-sheet">
-      <div class="handle"></div>
-      <div id="venda-title" class="modal-title">💰 Nova Venda</div>
-      <div class="input-group">
-        <label class="input-label">Cliente</label>
-        <select id="venda-cliente" class="input-field"></select>
-        <button class="btn btn-sm btn-secondary mt-2" id="venda-add-cliente-rapido" style="width:100%;">+ Cliente rápido</button>
-      </div>
-      <div class="input-group">
-        <label class="input-label">Profissional</label>
-        <select id="venda-profissional" class="input-field"></select>
-      </div>
-      <div style="background:var(--bg-soft);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
-        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:10px;">Adicionar Serviço / Produto</div>
-        <div class="add-item-row">
-          <select id="ci-servico-sel" class="input-field" style="margin:0;padding:10px 12px;font-size:.85rem;"></select>
-          <input type="number" id="ci-valor" class="input-field" placeholder="Kz" style="margin:0;padding:10px 12px;font-size:.85rem;" min="0" step="500">
-        </div>
-        <button class="btn btn-success btn-block btn-sm" id="btn-add-item">+ Adicionar ao carrinho</button>
-      </div>
-      <div id="cart-items-list"></div>
-      <div id="cart-total-area"></div>
-      <div class="input-group mt-3">
-        <label class="input-label">Forma de Pagamento</label>
-        <select id="venda-pagamento" class="input-field">
-          <option value="Numerário">💵 Numerário</option>
-          <option value="Multicaixa Express">📱 Multicaixa Express</option>
-          <option value="Transferência Bancária">🏦 Transferência Bancária</option>
-          <option value="Cartão">💳 Cartão</option>
-          <option value="Outro">Outro</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:12px;margin-top:12px;">
-        <button class="btn btn-secondary" style="flex:1;" id="modal-venda-cancel">Cancelar</button>
-        <button class="btn btn-primary" style="flex:2;" id="modal-venda-save">✅ Confirmar Venda</button>
+    <!-- 1. CLIENTE -->
+    <div class="input-group">
+      <label class="input-label">Cliente</label>
+      <select id="venda-cliente" class="input-field"></select>
+      <button class="btn btn-sm btn-secondary mt-2" id="venda-add-cliente-rapido" style="width:100%;">+ Cliente rápido</button>
+    </div>
+
+<!-- 2. ADICIONAR SERVIÇO (Serviço + Valor na mesma linha) -->
+<div style="background:var(--bg-soft);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:8px;">Adicionar Serviço / Produto</div>
+
+  <!-- Linha: Serviço (esquerda) + Valor fixo (direita, compacto) -->
+  <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;">
+    <!-- Select de serviço (ocupa o espaço restante) -->
+    <div style="flex:1;min-width:0;">
+      <select id="ci-servico-sel" class="input-field" style="width:100%;padding:10px 12px;font-size:.85rem;">
+        <option value="">Selecionar serviço</option>
+      </select>
+    </div>
+    <!-- Valor fixo (compacto, centralizado) -->
+    <div style="flex-shrink:0;text-align:center;width:100px;">
+      <div style="font-size:.55rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">Valor fixo</div>
+      <div style="display:flex;align-items:center;background:var(--card-white);border:1.5px solid var(--border-soft);border-radius:var(--radius-md);padding:0 4px;justify-content:center;">
+        <input type="number" id="ci-valor" class="input-field" placeholder="0" style="border:none;background:transparent;padding:8px 0;text-align:center;font-weight:700;color:var(--green);font-size:.85rem;width:55px;" min="0" step="500">
+        <span style="font-weight:700;color:var(--gold-dark);font-size:.85rem;margin-left:1px;">Kz</span>
       </div>
     </div>
   </div>
 
-  <!-- FUNDO -->
-  <div id="modal-fundo" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fundo-title">
-    <div class="modal-sheet">
-      <div class="handle"></div>
-      <div id="fundo-title" class="modal-title">Fundo de Maneio</div>
-      <div class="input-group">
-        <label class="input-label">Novo Fundo (Kz)</label>
-        <input type="number" id="fundo-valor" class="input-field" placeholder="0" min="0" step="1000">
-      </div>
-      <div style="display:flex;gap:12px;margin-top:12px;">
-        <button class="btn btn-secondary" style="flex:1;" id="modal-fundo-cancel">Cancelar</button>
-        <button class="btn btn-primary" style="flex:2;" id="modal-fundo-save">Actualizar</button>
-      </div>
-    </div>
+  <!-- PROFISSIONAL (por baixo) -->
+  <div style="margin-bottom:8px;">
+    <label class="input-label" style="font-size:.6rem;">Profissional</label>
+    <select id="venda-profissional" class="input-field" style="width:100%;padding:10px 12px;font-size:.85rem;">
+      <option value="">Selecionar profissional</option>
+    </select>
   </div>
 
-  <!-- DETALHE VENDA -->
-  <div id="modal-detalhe-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detalhe-venda-titulo">
-    <div class="modal-sheet">
-      <div class="handle"></div>
-      <div id="detalhe-venda-titulo" class="modal-title">Detalhe da Venda</div>
-      <div id="detalhe-venda-conteudo"></div>
-      <div style="display:flex;gap:12px;margin-top:16px;">
-        <button class="btn btn-secondary" style="flex:1;" id="modal-detalhe-fechar">Fechar</button>
-        <button class="btn btn-primary" style="flex:2;" id="btn-imprimir-recibo">
-          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><rect x="6" y="9" width="12" height="8" rx="1"/><path d="M6 9V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4"/><path d="M6 17H4a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/></svg>
-          Imprimir Recibo
-        </button>
-      </div>
+  <!-- Botão adicionar -->
+  <button class="btn btn-success btn-block btn-sm" id="btn-add-item">+ Adicionar ao carrinho</button>
+</div>
+    <!-- 3. CARRINHO -->
+    <div id="cart-items-list"></div>
+    <div id="cart-total-area"></div>
+
+    <!-- 4. FORMA DE PAGAMENTO -->
+    <div class="input-group mt-3">
+      <label class="input-label">Forma de Pagamento</label>
+      <select id="venda-pagamento" class="input-field">
+        <option value="Numerário">💵 Numerário</option>
+        <option value="Multicaixa Express">📱 Multicaixa Express</option>
+        <option value="Transferência Bancária">🏦 Transferência Bancária</option>
+        <option value="Cartão">💳 Cartão</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </div>
+
+    <!-- 5. BOTÕES FINAIS -->
+    <div style="display:flex;gap:12px;margin-top:12px;">
+      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:0.9rem;padding:10px 0;" id="modal-venda-cancel">Cancelar</button>
+      <button class="btn btn-success btn-sm" style="flex:1;font-size:0.9rem;padding:10px 0;" id="modal-venda-save">Confirmar Venda</button>
     </div>
   </div>
-
-  <!-- FECHO CAIXA -->
-  <div id="modal-fecho" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fecho-title">
-    <div class="modal-sheet">
-      <div class="handle"></div>
-      <div id="fecho-title" class="modal-title">📋 Fecho de Caixa</div>
-      <div id="fecho-conteudo"></div>
-      <div style="display:flex;gap:12px;margin-top:16px;">
-        <button class="btn btn-secondary" style="flex:1;" id="modal-fecho-fechar">Fechar</button>
-        <button class="btn btn-primary" style="flex:2;" id="btn-imprimir-fecho">🖨️ Imprimir</button>
-      </div>
+</div>
+<!-- FUNDO -->
+<div id="modal-fundo" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fundo-title">
+  <div class="modal-sheet">
+    <div class="handle"></div>
+    <div id="fundo-title" class="modal-title">Fundo de Maneio</div>
+    <div class="input-group">
+      <label class="input-label">Novo Fundo (Kz)</label>
+      <input type="number" id="fundo-valor" class="input-field" placeholder="0" min="0" step="1000">
+    </div>
+    <div style="display:flex;gap:12px;margin-top:12px;">
+      <button class="btn btn-secondary" style="flex:1;" id="modal-fundo-cancel">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2;" id="modal-fundo-save">Actualizar</button>
     </div>
   </div>
+</div>
 
+<!-- DETALHE VENDA -->
+<div id="modal-detalhe-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detalhe-venda-titulo">
+  <div class="modal-sheet">
+    <div class="handle"></div>
+    <div id="detalhe-venda-titulo" class="modal-title">Detalhe da Venda</div>
+    <div id="detalhe-venda-conteudo"></div>
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <button class="btn btn-secondary" style="flex:1;" id="modal-detalhe-fechar">Fechar</button>
+      <button class="btn btn-primary" style="flex:2;" id="btn-imprimir-recibo">
+        <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><rect x="6" y="9" width="12" height="8" rx="1"/><path d="M6 9V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4"/><path d="M6 17H4a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/></svg>
+        Imprimir Recibo
+      </button>
+    </div>
+  </div>
+</div>
+<!-- FECHO CAIXA -->
+<div id="modal-fecho" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fecho-title">
+  <div class="modal-sheet">
+    <div class="handle"></div>
+    <div id="fecho-title" class="modal-title">📋 Fecho de Caixa</div>
+    <div id="fecho-conteudo"></div>
+
+    <!-- Botões redondos (pill), magros e pequenos -->
+    <div style="display:flex; gap:6px; margin-top:14px; justify-content:center; flex-wrap:wrap;">
+      <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; border:1px solid #ccc; background:#f0f0f0; color:#333; cursor:pointer;" id="modal-fecho-fechar">
+        Regressar
+      </button>
+      <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; background:#2C7A4D; color:#fff; border:none; cursor:pointer;" id="confirmar-fecho-btn">
+        Realizar fecho
+      </button>
+      <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; background:linear-gradient(135deg,#D4AF37,#A7872B); color:#fff; border:none; cursor:pointer;" id="btn-imprimir-fecho">
+        Imprimir
+      </button>
+    </div>
+  </div>
+</div>
   <!-- PROFISSIONAL -->
   <div id="modal-prof" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="prof-modal-title">
     <div class="modal-sheet">

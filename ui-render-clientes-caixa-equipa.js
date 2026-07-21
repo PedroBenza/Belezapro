@@ -56,23 +56,24 @@ function renderCaixa() {
   const entradas = state.movimentos.filter(m => m.data === hojeStr && m.tipo === 'venda').reduce((s, m) => s + m.valor, 0);
   const despesas = state.movimentos.filter(m => m.data === hojeStr && m.tipo === 'despesa').reduce((s, m) => s + m.valor, 0);
   document.getElementById('caixa-saldo').textContent = fmtKz(state.config.fundo + entradas - despesas);
-  document.getElementById('caixa-fundo').textContent = fmtKz(state.config.fundo);// Variação do faturamento de hoje face a ontem
-const dOntem = new Date();
-dOntem.setDate(dOntem.getDate() - 1);
-const ontemStr = dOntem.getFullYear() + '-' + String(dOntem.getMonth() + 1).padStart(2, '0') + '-' + String(dOntem.getDate()).padStart(2, '0');
-const totalOntem = state.movimentos.filter(m => m.data === ontemStr && m.tipo === 'venda').reduce((s, m) => s + m.valor, 0);
-const variacaoEl = document.getElementById('caixa-variacao');
-if (variacaoEl) {
-  let variacao = 0;
-  if (totalOntem > 0) {
-    variacao = ((entradas - totalOntem) / totalOntem) * 100;
-  } else if (entradas > 0) {
-    variacao = 100;
+  document.getElementById('caixa-fundo').textContent = fmtKz(state.config.fundo);
+  // Variação do faturamento de hoje face a ontem
+  const dOntem = new Date();
+  dOntem.setDate(dOntem.getDate() - 1);
+  const ontemStr = dOntem.getFullYear() + '-' + String(dOntem.getMonth() + 1).padStart(2, '0') + '-' + String(dOntem.getDate()).padStart(2, '0');
+  const totalOntem = state.movimentos.filter(m => m.data === ontemStr && m.tipo === 'venda').reduce((s, m) => s + m.valor, 0);
+  const variacaoEl = document.getElementById('caixa-variacao');
+  if (variacaoEl) {
+    let variacao = 0;
+    if (totalOntem > 0) {
+      variacao = ((entradas - totalOntem) / totalOntem) * 100;
+    } else if (entradas > 0) {
+      variacao = 100;
+    }
+    const subiu = variacao >= 0;
+    variacaoEl.textContent = `${subiu ? '↑' : '↓'} ${Math.abs(Math.round(variacao))}%`;
+    variacaoEl.style.color = subiu ? 'var(--green)' : 'var(--red)';
   }
-  const subiu = variacao >= 0;
-  variacaoEl.textContent = `${subiu ? '↑' : '↓'} ${Math.abs(Math.round(variacao))}%`;
-  variacaoEl.style.color = subiu ? 'var(--green)' : 'var(--red)';
-}
 
   const periodo = state.histPeriodo;
   const movs = getMovimentosPeriodo(periodo).sort((a, b) => b.data.localeCompare(a.data) || b.hora.localeCompare(a.hora));
@@ -261,11 +262,16 @@ function populateVendaSelects() {
   const profSel = document.getElementById('venda-profissional');
   const catSel = document.getElementById('ci-servico-sel');
   if (!profSel || !catSel) return;
-  const prevServ = catSel.value;
-  catSel.innerHTML = state.servicos.map(s =>
-    `<option value="${escHtml(s.nome)}" data-preco="${s.precoBase}">${escHtml(s.nome)}</option>`
-  ).join('') + '<option value="__custom" data-preco="">✏️ Outro (personalizado)</option>';
-  if (prevServ) catSel.value = prevServ;
+  
+  // Remove qualquer seleção anterior
+  catSel.selectedIndex = -1;
+
+  // Preenche o select de serviços com uma opção vazia no início
+  catSel.innerHTML = `<option value="">Selecionar serviço</option>` +
+    state.servicos.map(s =>
+      `<option value="${escHtml(s.nome)}" data-preco="${s.precoBase}">${escHtml(s.nome)}</option>`
+    ).join('') +
+    '<option value="__custom" data-preco="">✏️ Outro (personalizado)</option>';
 
   const filtrarProfsVenda = (servicoNome) => {
     let profs;
@@ -280,14 +286,16 @@ function populateVendaSelects() {
         .filter(p => nomes.includes(p.nome))
         .map(p => ({ id: p.id, nome: p.nome }));
     }
-    const prevProfId = profSel.value;
-    profSel.innerHTML = profs.map(p =>
-      `<option value="${p.id}">${escHtml(p.nome)}</option>`
-    ).join('');
-    if (profs.some(p => p.id === prevProfId)) profSel.value = prevProfId;
+    // Preenche o select de profissionais com uma opção vazia no início
+    profSel.innerHTML = `<option value="">Selecionar profissional</option>` +
+      profs.map(p =>
+        `<option value="${p.id}">${escHtml(p.nome)}</option>`
+      ).join('');
   };
 
-  filtrarProfsVenda(catSel.value);
+  // Remove a chamada automática do filtro (para não pré-selecionar)
+  // filtrarProfsVenda(catSel.value); // REMOVIDO
+
   if (catSel._filterHandler) catSel.removeEventListener('change', catSel._filterHandler);
   catSel._filterHandler = function() {
     filtrarProfsVenda(this.value);
@@ -302,5 +310,6 @@ function populateVendaSelects() {
     }
   };
   catSel.addEventListener('change', catSel._filterHandler);
-  if (catSel.value) catSel._filterHandler.call(catSel);
+  // Remove a chamada automática no final
+  // if (catSel.value) catSel._filterHandler.call(catSel); // REMOVIDO
 }

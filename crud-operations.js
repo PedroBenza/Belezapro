@@ -18,7 +18,6 @@
 // ====================================================================
 //  ESTADO GLOBAL — movido para core-state.js (Fase B da modularização)
 // ====================================================================
-// PROF_DEFAULT e SERVICOS_DEFAULT movidos para core-constants.js
 // dbClear movido para db-indexeddb.js (Fase B da modularização)
 
 // ====================================================================
@@ -54,30 +53,32 @@ async function loadState(trocouDeSalao = false) {
   // chamado (ver checkSession/login). trocouDeSalao agora é recebido
   // como parâmetro, já calculado ANTES da cache ser sobrescrita.
 
-  let clientes, agendamentos, movimentos, profs, servicos;
+  let clientes, agendamentos, movimentos, profs, servicos, fechos;
   if (trocouDeSalao) {
     // Este dispositivo já teve dados de OUTRO salão gravados localmente.
     // Limpar tudo antes de continuar, para nunca misturar clientes/
     // agendamentos/movimentos/profissionais/serviços entre salões.
-    await Promise.all(['clientes', 'agendamentos', 'movimentos', 'profissionais', 'servicos'].map(dbClear));
+    await Promise.all(['clientes', 'agendamentos', 'movimentos', 'profissionais', 'servicos', 'fechos_caixa'].map(dbClear));
     // Limpar também a fila de sincronização para não enviar dados do salão antigo
     localStorage.removeItem(SYNC_QUEUE_KEY);
-    clientes = []; agendamentos = []; movimentos = []; profs = []; servicos = [];
+    clientes = []; agendamentos = []; movimentos = []; profs = []; servicos = []; fechos = [];
     console.warn('[BeautyPro] Troca de salão detetada neste dispositivo — dados locais e fila de sync foram limpos.');
   } else {
     // Buscar dados apenas se NÃO houve troca de salão
-    const [clientesData, agendamentosData, movimentosData, profsData, servicosData] = await Promise.all([
+    const [clientesData, agendamentosData, movimentosData, profsData, servicosData, fechosData] = await Promise.all([
       dbGetAll('clientes'),
       dbGetAll('agendamentos'),
       dbGetAll('movimentos'),
       dbGetAll('profissionais'),
       dbGetAll('servicos'),
+      dbGetAll('fechos_caixa'),
     ]);
     clientes = clientesData;
     agendamentos = agendamentosData;
     movimentos = movimentosData;
     profs = profsData;
     servicos = servicosData;
+    fechos = fechosData;
   }
 
   // ============================================================
@@ -89,6 +90,7 @@ async function loadState(trocouDeSalao = false) {
   const safeMovimentos = safe(movimentos);
   const safeProfs = safe(profs);
   const safeServicos = safe(servicos);
+  const safeFechos = safe(fechos);
 
   // CORREÇÃO (causa-raiz do 403 em profissionais/serviços): PROF_DEFAULT
   // e SERVICOS_DEFAULT em core-constants.js têm IDs fixos, iguais para
@@ -106,6 +108,7 @@ async function loadState(trocouDeSalao = false) {
   state.movimentos = safeMovimentos;
   state.profissionais = safeProfs.length ? safeProfs : profsPadraoComIdProprio;
   state.servicos = safeServicos.length ? safeServicos : servicosPadraoComIdProprio;
+  state.fechos_caixa = safeFechos;
 
   const chartPeriodo = localStorage.getItem('bp_chart_periodo') || 'semana';
   const chartOffset = parseInt(localStorage.getItem('bp_chart_offset')) || 0;
@@ -148,14 +151,26 @@ async function saveConfig() {
 // ====================================================================
 //  CRUD FUNCTIONS (preservadas do original)
 // ====================================================================
+
+// -------------------- CLIENTE --------------------
 async function addCliente(c) {
   if (!verificarLimite('clientes')) return null;
   const n = { ...c, id: uuid() };
-  await dbPut('clientes', n);
-  state.clientes.push(n);
-  updateUI();
-  return n;
+  try {
+    await dbPut('clientes', n);
+    state.clientes.push(n);
+    updateUI();
+    toast('Cliente adicionado!', 'success');
+    return n;
+  } catch (err) {
+    if (err.message === 'LIMITE_PLANO_ATINGIDO') {
+      mostrarModalUpgrade('Limite de clientes atingido. Faça upgrade para continuar.');
+      return null;
+    }
+    throw err;
+  }
 }
+
 async function updateCliente(id, data) {
   const i = state.clientes.findIndex(c => c.id === id);
   if (i === -1) return;
@@ -164,6 +179,13 @@ async function updateCliente(id, data) {
   updateUI();
 }
 
+async function deleteCliente(id) {
+  await dbDelete('clientes', id);
+  state.clientes = state.clientes.filter(c => c.id !== id);
+  updateUI();
+}
+
+// -------------------- AGENDAMENTO --------------------
 async function addAgendamento(ag) {
   const dtStr = ag.data + 'T' + (ag.hora || '00:00') + ':00';
   const agDatetime = new Date(dtStr);
@@ -173,6 +195,11 @@ async function addAgendamento(ag) {
     return null;
   }
   if (!verificarLimite('agendamentos')) return null;
+  if (!ag.profissional_id || ag.profissional_id.trim() === '') {
+    toast('Selecione um profissional antes de agendar.', 'error');
+    return null;
+  }
+
   const n = {
     ...ag,
     id: uuid(),
@@ -182,10 +209,19 @@ async function addAgendamento(ag) {
     profissional_id: ag.profissional_id || null,
     profissional: ag.profissional || ''
   };
-  await dbPut('agendamentos', n);
-  state.agendamentos.push(n);
-  updateUI();
-  return n;
+  try {
+    await dbPut('agendamentos', n);
+    state.agendamentos.push(n);
+    updateUI();
+    toast('Agendamento criado!', 'success');
+    return n;
+  } catch (err) {
+    if (err.message === 'LIMITE_PLANO_ATINGIDO') {
+      mostrarModalUpgrade('Limite de agendamentos atingido. Faça upgrade para continuar.');
+      return null;
+    }
+    throw err;
+  }
 }
 
 async function updateAgendamento(id, data) {
@@ -202,13 +238,23 @@ async function deleteAgendamento(id) {
   updateUI();
 }
 
+// -------------------- PROFISSIONAL --------------------
 async function addProfissional(p) {
   if (!verificarLimite('profissionais')) return null;
   const n = { ...p, id: uuid() };
-  await dbPut('profissionais', n);
-  state.profissionais.push(n);
-  updateUI();
-  return n;
+  try {
+    await dbPut('profissionais', n);
+    state.profissionais.push(n);
+    updateUI();
+    toast('Profissional adicionado!', 'success');
+    return n;
+  } catch (err) {
+    if (err.message === 'LIMITE_PLANO_ATINGIDO') {
+      mostrarModalUpgrade('Limite de profissionais atingido. Faça upgrade para continuar.');
+      return null;
+    }
+    throw err;
+  }
 }
 
 async function updateProfissional(id, data) {
@@ -225,12 +271,7 @@ async function deleteProfissional(id) {
   updateUI();
 }
 
-async function deleteCliente(id) {
-  await dbDelete('clientes', id);
-  state.clientes = state.clientes.filter(c => c.id !== id);
-  updateUI();
-}
-
+// -------------------- SERVIÇO --------------------
 async function addServico(s) {
   const n = { ...s, id: uuid() };
   await dbPut('servicos', n);
@@ -269,10 +310,17 @@ function getProfissionaisPorServico(nomeServico) {
   return state.profissionais.map(p => p.nome);
 }
 
+// -------------------- VENDA --------------------
 async function registarVenda(dados) {
   // Validação de cliente obrigatório
   if (!dados.cliente || dados.cliente.trim() === '') {
     toast('Selecione ou crie um cliente antes de registar a venda.', 'error');
+    return null;
+  }
+
+  // VALIDAÇÃO DE PROFISSIONAL OBRIGATÓRIO
+  if (!dados.profissional_id || dados.profissional_id.trim() === '') {
+    toast('Selecione um profissional antes de registar a venda.', 'error');
     return null;
   }
 
@@ -299,6 +347,7 @@ async function registarVenda(dados) {
   return id;
 }
 
+// -------------------- MOVIMENTO GENÉRICO --------------------
 async function addMovimento(mov) {
   const n = { ...mov, id: uuid(), data: hoje(), hora: horaAgora() };
   await dbPut('movimentos', n);

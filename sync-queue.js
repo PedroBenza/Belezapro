@@ -9,12 +9,12 @@ const DELETED_KEY = 'bp_deleted_items';
 
 function getDeletedItems() {
   try { return JSON.parse(localStorage.getItem(DELETED_KEY) || '[]'); }
-  catch { return []; }
+  catch (e) { logErroSilencioso('getDeletedItems', e); return []; }
 }
 
 function saveDeletedItems(items) {
   try { localStorage.setItem(DELETED_KEY, JSON.stringify(items)); }
-  catch {}
+  catch (e) { logErroSilencioso('saveDeletedItems', e); }
 }
 
 function addDeletedItem(id, tabela) {
@@ -32,12 +32,12 @@ function removeDeletedItem(id, tabela) {
 
 function getSyncQueue() {
   try { return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]'); }
-  catch { return []; }
+  catch (e) { logErroSilencioso('getSyncQueue', e); return []; }
 }
 
 function saveSyncQueue(q) {
   try { localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); }
-  catch {}
+  catch (e) { logErroSilencioso('saveSyncQueue', e); }
 }
 
 function atualizarIndicadorSync() {
@@ -82,15 +82,29 @@ async function flushSyncQueue() {
       continue;
     }
 
+    // Respeitar o backoff exponencial
+    if (op.nextRetry && Date.now() < op.nextRetry) {
+      restantes.push(op);
+      continue;
+    }
+
     try {
       if (op.operacao === 'delete') {
         await supabaseDelete(op.tabela, op.payload.id);
-        // DELETE bem-sucedido → remover da lista negra
         removeDeletedItem(op.payload.id, op.tabela);
       } else {
         await supabaseUpsert(op.tabela, op.payload);
       }
     } catch (err) {
+      // ================================================================
+      //  TRATAMENTO PARA LIMITE DE PLANO (não retentar)
+      // ================================================================
+      if (err.message === 'LIMITE_PLANO_ATINGIDO') {
+        toast('Operação bloqueada: limite do plano atingido.', 'error');
+        // Não colocar de volta na fila – descartar definitivamente
+        continue;
+      }
+
       if (err.message === 'SESSION_EXPIRED') {
         restantes.push(op);
         for (let j = i + 1; j < q.length; j++) {
@@ -133,12 +147,25 @@ const _dbPutOriginal    = dbPut;
 const _dbDeleteOriginal = dbDelete;
 
 dbPut = async function(store, item) {
+  // Escrever localmente primeiro (offline-first)
   await _dbPutOriginal(store, item);
+
   const tabela = STORE_TO_TABLE[store];
   if (!tabela || !state.config.salaoId) return item;
+
   if (navigator.onLine) {
-    try { await supabaseUpsert(tabela, item); }
-    catch { addToSyncQueue(tabela, 'upsert', item); }
+    try {
+      await supabaseUpsert(tabela, item);
+    } catch (err) {
+      // Se for erro de limite de plano, reverter a escrita local e relançar
+      if (err.message === 'LIMITE_PLANO_ATINGIDO') {
+        await _dbDeleteOriginal(store, item.id);
+        // Remover do estado local (será feito pelo chamador)
+        throw err;
+      }
+      // Outros erros: enfileirar para tentar depois
+      addToSyncQueue(tabela, 'upsert', item);
+    }
   } else {
     addToSyncQueue(tabela, 'upsert', item);
   }
@@ -161,4 +188,4 @@ dbDelete = async function(store, id) {
   } else {
     addToSyncQueue(tabela, 'delete', { id });
   }
-};  
+};

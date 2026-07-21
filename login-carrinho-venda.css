@@ -27,7 +27,7 @@
 }
 input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-appearance: none; }
 
-/* ===== CARRINHO ===== */
+/* ===== CARRINHO (com botões +/‑ e profissional por item) ===== */
 .cart-item-row {
   display: grid;
   grid-template-columns: 1fr 80px 72px 36px;
@@ -36,15 +36,61 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   padding: 8px 0;
   border-bottom: 1px solid var(--border-soft);
 }
-.cart-item-row .ci-name { font-size: .88rem; font-weight: 500; }
-.cart-item-row .ci-qty {
-  font-size: .8rem;
-  text-align: center;
-  background: var(--bg-soft);
-  border-radius: var(--radius-lg);
-  padding: 4px;
-  color: var(--text-secondary);
+.cart-item-row .ci-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.cart-item-row .ci-name {
+  font-size: .88rem;
   font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cart-item-row .ci-prof {
+  font-size: .65rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cart-item-row .ci-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+.cart-item-row .qty-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-soft);
+  background: var(--card-white);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+.cart-item-row .qty-btn:active {
+  transform: scale(0.92);
+  background: var(--bg-soft);
+}
+.cart-item-row .qty-number {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  min-width: 20px;
+  text-align: center;
 }
 .cart-item-row .ci-val {
   font-size: .85rem;
@@ -70,6 +116,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   z-index: -1;
 }
 .cart-item-row .ci-del:hover { opacity: 0.8; color: var(--red); }
+
 .cart-item-row.adding {
   animation: cartItemAdd 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -85,6 +132,7 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   0% { opacity: 1; transform: translateX(0); max-height: 60px; }
   100% { opacity: 0; transform: translateX(100%); max-height: 0; margin: 0; padding: 0; border: 0; overflow: hidden; }
 }
+
 .cart-total-row {
   display: flex;
   justify-content: space-between;
@@ -93,8 +141,27 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   margin-top: 4px;
   border-top: 2px solid var(--gold);
 }
-.cart-total-row .ct-label { font-weight: 600; font-size: .9rem; color: var(--text-secondary); }
+.cart-total-row .ct-label {
+  font-weight: 600;
+  font-size: .9rem;
+  color: var(--text-secondary);
+}
+.cart-total-row .ct-val {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+  text-align: right;
+}
 
+.add-item-row {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* ===== RECIBO E DETALHE DE VENDA ===== */
 /* Recibo de venda premium — logótipo com gradiente dourado ("foil") */
 .recibo-logo-gold {
   background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 45%, #F4E4B0 55%, var(--gold) 65%, var(--gold-dark) 100%);
@@ -115,25 +182,12 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
 .modal-sheet--recibo #detalhe-venda-itens .r-item-row span:nth-child(3),
 .modal-sheet--recibo #detalhe-venda-itens .r-item-row span:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Modal "Venda registada" — animação de check (usada em mostrarConfirmacaoVenda, app.js) */
+/* Modal "Venda registada" — animação de check */
 @keyframes drawCircle {
   to { stroke-dashoffset: 0; }
 }
 @keyframes drawCheck {
   to { stroke-dashoffset: 0; }
-}
-.cart-total-row .ct-val {
-  font-family: var(--font-serif);
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--gold-dark);
-  text-align: right;
-}
-.add-item-row {
-  display: grid;
-  grid-template-columns: 1fr 100px;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 
 /* ===== DETALHE VENDA ===== */
@@ -200,4 +254,3 @@ input[type="date"], input[type="datetime-local"] { appearance: none; -webkit-app
   background: var(--gold-light);
   color: var(--gold-dark);
 }
-

@@ -47,6 +47,18 @@ async function supabaseUpsert(tabela, item) {
   } catch (err) {
     if (err.message === 'SESSION_EXPIRED') throw err;
     const errorMsg = err.message || String(err) || 'Erro desconhecido';
+    
+    // ================================================================
+    //  TRATAMENTO ESPECÍFICO PARA LIMITE DE PLANO
+    // ================================================================
+    if (errorMsg.includes('LIMITE_PLANO_ATINGIDO')) {
+      if (typeof mostrarModalUpgrade === 'function') {
+        mostrarModalUpgrade('Limite do plano atingido. Faça upgrade para continuar.');
+      }
+      // Não relançar para não ir para a fila de retry
+      throw new Error('LIMITE_PLANO_ATINGIDO');
+    }
+    
     console.error(`[sync-rest] Falha ao fazer upsert em ${tabela} (id: ${item?.id || 'desconhecido'}):`, errorMsg);
     throw new Error(`Falha na sincronização de ${tabela}: ${errorMsg}`);
   }
@@ -158,7 +170,7 @@ function toSupabaseFormat(tabela, item) {
         descricao: item.descricao || '',
         valor: Math.round(item.valor || 0),
         cliente: item.cliente || 'Anónimo',
-        // profissional_id: isValidUUID(item.profissional_id) ? item.profissional_id : null,
+        profissional_id: isValidUUID(item.profissional_id) ? item.profissional_id : null,
         profissional: item.profissional || '',
         itens: item.itens || [],
         metodo_pagamento: item.metodoPagamento || 'Numerário',
@@ -172,7 +184,7 @@ function toSupabaseFormat(tabela, item) {
         salao_id: salaoId,
         cliente: item.cliente || '',
         servico: item.servico || '',
-        // profissional_id: isValidUUID(item.profissional_id) ? item.profissional_id : null,
+        profissional_id: isValidUUID(item.profissional_id) ? item.profissional_id : null,
         profissional: item.profissional || '',
         data: item.data,
         hora: item.hora || '00:00',
@@ -228,7 +240,7 @@ function fromSupabaseFormat(tabela, row) {
         descricao:       row.descricao,
         valor:           row.valor,
         cliente:         row.cliente,
-        // profissional_id: row.profissional_id || null,
+        profissional_id: row.profissional_id || null,
         profissional:    row.profissional || '',
         itens:           row.itens || [],
         metodoPagamento: row.metodo_pagamento,
@@ -241,7 +253,7 @@ function fromSupabaseFormat(tabela, row) {
         id:           row.id,
         cliente:      row.cliente,
         servico:      row.servico,
-        // profissional_id: row.profissional_id || null,
+        profissional_id: row.profissional_id || null,
         profissional: row.profissional || '',
         data:         row.data,
         hora:         row.hora,

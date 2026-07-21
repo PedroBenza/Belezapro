@@ -13,6 +13,7 @@ const STORE_TO_TABLE = {
   movimentos:    'movimentos',
   profissionais: 'profissionais',
   servicos:      'servicos',
+  fechos_caixa:  'fechos_caixa',   // ← ADICIONADO
   config:        null,
 };
 

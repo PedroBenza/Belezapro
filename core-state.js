@@ -8,6 +8,7 @@ let state = {
   movimentos: [],
   profissionais: [],
   servicos: [],
+  fechos_caixa: [],   // ← ADICIONADO
   agendaDataAtual: hoje(),
   histPeriodo: 'hoje',
   carrinho: [],

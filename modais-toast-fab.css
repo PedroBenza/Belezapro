@@ -163,4 +163,12 @@
   z-index: -1;
 }
 .fab:active { opacity: .85; box-shadow: 0 4px 12px rgba(212, 175, 55, .18); }
-
+/* Forçar botões do fecho a serem redondos e magros */
+#modal-fecho button {
+  border-radius: 9999px !important;
+  padding: 4px 14px !important;
+  font-size: 0.7rem !important;
+  height: 30px !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}

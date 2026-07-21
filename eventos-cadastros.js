@@ -93,14 +93,16 @@ document.getElementById('modal-cliente-rapido-save').addEventListener('click', a
   const nome = document.getElementById('cliente-rapido-nome').value.trim();
   const telefone = document.getElementById('cliente-rapido-telefone').value.trim();
   if (!nome) { toast('Nome é obrigatório', 'error'); return; }
-  await addCliente({ nome, telefone, notas: '' });
-  closeModal('modal-cliente-rapido');
-  toast('Cliente adicionado!', 'success');
-  openModal('modal-agenda');
-  const sel = document.getElementById('agenda-cliente');
-  sel.innerHTML = '<option value="">Selecionar cliente</option>' + state.clientes.map(c =>
-    `<option value="${escHtml(c.nome)}">${escHtml(c.nome)}</option>`).join('');
-  sel.value = nome;
+  const result = await addCliente({ nome, telefone, notas: '' });
+  if (result) {
+    closeModal('modal-cliente-rapido');
+    toast('Cliente adicionado!', 'success');
+    openModal('modal-agenda');
+    const sel = document.getElementById('agenda-cliente');
+    sel.innerHTML = '<option value="">Selecionar cliente</option>' + state.clientes.map(c =>
+      `<option value="${escHtml(c.nome)}">${escHtml(c.nome)}</option>`).join('');
+    sel.value = nome;
+  }
 });
 
 document.getElementById('modal-cliente-rapido-cancel').addEventListener('click', () => {
@@ -136,10 +138,17 @@ document.getElementById('modal-cliente-save').addEventListener('click', async ()
   const notas = document.getElementById('cliente-notas').value.trim();
   const id = document.getElementById('cliente-id').value;
   if (!nome) { toast('Nome é obrigatório', 'error'); return; }
-  if (id) { await updateCliente(id, { nome, telefone, notas });
-    toast('Cliente actualizado', 'success'); } else { await addCliente({ nome, telefone, notas });
-    toast('Cliente adicionado', 'success'); }
-  closeModal('modal-cliente');
+  if (id) { 
+    await updateCliente(id, { nome, telefone, notas });
+    toast('Cliente actualizado', 'success');
+    closeModal('modal-cliente');
+  } else { 
+    const result = await addCliente({ nome, telefone, notas });
+    if (result) {
+      toast('Cliente adicionado', 'success');
+      closeModal('modal-cliente');
+    }
+  }
 });
 
 document.getElementById('modal-cliente-cancel').addEventListener('click', () => closeModal('modal-cliente'));
@@ -172,10 +181,18 @@ document.getElementById('modal-prof-save').addEventListener('click', async () =>
   const esp = document.getElementById('prof-esp').value.trim();
   const id = document.getElementById('prof-id').value;
   if (!nome) { toast('Nome é obrigatório', 'error'); return; }
-  if (id) { await updateProfissional(id, { nome, especialidade: esp });
-    toast('Profissional actualizado', 'success'); } else { await addProfissional({ nome, especialidade: esp });
-    toast('Profissional adicionado', 'success'); }
-  closeModal('modal-prof');
+  
+  if (id) { 
+    await updateProfissional(id, { nome, especialidade: esp });
+    toast('Profissional actualizado', 'success');
+    closeModal('modal-prof');
+  } else { 
+    const result = await addProfissional({ nome, especialidade: esp });
+    if (result) {
+      toast('Profissional adicionado', 'success');
+      closeModal('modal-prof');
+    }
+  }
 });
 
 document.getElementById('modal-prof-cancel').addEventListener('click', () => closeModal('modal-prof'));

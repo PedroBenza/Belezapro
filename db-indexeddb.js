@@ -3,7 +3,7 @@
 //  da modularização)
 // ====================================================================
 let db = null;
-const STORES = ['config', 'clientes', 'agendamentos', 'movimentos', 'profissionais', 'servicos'];
+const STORES = ['config', 'clientes', 'agendamentos', 'movimentos', 'profissionais', 'servicos', 'fechos_caixa'];
 
 function openDB() {
   return new Promise((res, rej) => {
