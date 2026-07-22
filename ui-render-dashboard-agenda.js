@@ -81,7 +81,15 @@ function renderPlanoInfo() {
     iaInfo.textContent = limite > 0 ? `${info.label}: ${limite} perguntas/dia` : 'IA não disponível neste plano';
   }
   const cont = document.getElementById('ia-contador');
-  if (cont) cont.textContent = parseInt(localStorage.getItem('ia_perguntas_' + hoje()) || '0');
+if (cont) {
+  const info = PLANOS[getPlanoAtual()];
+  if (info.iaDia === 0) {
+    cont.textContent = '0';
+  } else {
+    const chave = 'ia_perguntas_' + (state.config.salaoId || 'local') + '_' + hoje();
+    cont.textContent = parseInt(localStorage.getItem(chave) || '0');
+  }
+}
 }
 function renderDashboard() {
   const hojeStr = hoje();

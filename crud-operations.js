@@ -30,6 +30,17 @@
 //  anterior (e a fila de sync) nunca são limpos. Por isso este helper é
 //  chamado em checkSession()/login ANTES de sincronizarConfigDoServidor().
 // ====================================================================
+// ====================================================================
+//  VALIDAÇÃO DE DUPLICADOS (local)
+// ====================================================================
+function existeNomeDuplicado(tabela, nome, idIgnorar = null) {
+  const lista = state[tabela] || [];
+  const nomeNormalizado = nome.trim().toLowerCase();
+  return lista.some(item =>
+    item.nome && item.nome.trim().toLowerCase() === nomeNormalizado &&
+    (idIgnorar ? item.id !== idIgnorar : true)
+  );
+}
 async function detetarTrocaDeSalao(novoSalaoId) {
   const configs = await dbGetAll('config');
   const salaoIdCache = configs.find(c => c.key === 'salaoId');
@@ -155,7 +166,15 @@ async function saveConfig() {
 // -------------------- CLIENTE --------------------
 async function addCliente(c) {
   if (!verificarLimite('clientes')) return null;
-  const n = { ...c, id: uuid() };
+  const nome = c.nome.trim();
+  if (!nome) { toast('Nome é obrigatório', 'error'); return null; }
+
+  if (existeNomeDuplicado('clientes', nome)) {
+    toast('Já existe um cliente com este nome.', 'error');
+    return null;
+  }
+
+  const n = { ...c, id: uuid(), nome };
   try {
     await dbPut('clientes', n);
     state.clientes.push(n);
@@ -170,15 +189,20 @@ async function addCliente(c) {
     throw err;
   }
 }
-
 async function updateCliente(id, data) {
+  if (data.nome) {
+    const nome = data.nome.trim();
+    if (existeNomeDuplicado('clientes', nome, id)) {
+      toast('Já existe um cliente com este nome.', 'error');
+      return;
+    }
+  }
   const i = state.clientes.findIndex(c => c.id === id);
   if (i === -1) return;
   state.clientes[i] = { ...state.clientes[i], ...data };
   await dbPut('clientes', state.clientes[i]);
   updateUI();
 }
-
 async function deleteCliente(id) {
   await dbDelete('clientes', id);
   state.clientes = state.clientes.filter(c => c.id !== id);
@@ -241,7 +265,15 @@ async function deleteAgendamento(id) {
 // -------------------- PROFISSIONAL --------------------
 async function addProfissional(p) {
   if (!verificarLimite('profissionais')) return null;
-  const n = { ...p, id: uuid() };
+  const nome = p.nome.trim();
+  if (!nome) { toast('Nome é obrigatório', 'error'); return null; }
+
+  if (existeNomeDuplicado('profissionais', nome)) {
+    toast('Já existe um profissional com este nome.', 'error');
+    return null;
+  }
+
+  const n = { ...p, id: uuid(), nome };
   try {
     await dbPut('profissionais', n);
     state.profissionais.push(n);
@@ -256,15 +288,20 @@ async function addProfissional(p) {
     throw err;
   }
 }
-
 async function updateProfissional(id, data) {
+  if (data.nome) {
+    const nome = data.nome.trim();
+    if (existeNomeDuplicado('profissionais', nome, id)) {
+      toast('Já existe um profissional com este nome.', 'error');
+      return;
+    }
+  }
   const i = state.profissionais.findIndex(p => p.id === id);
   if (i === -1) return;
   state.profissionais[i] = { ...state.profissionais[i], ...data };
   await dbPut('profissionais', state.profissionais[i]);
   updateUI();
 }
-
 async function deleteProfissional(id) {
   await dbDelete('profissionais', id);
   state.profissionais = state.profissionais.filter(p => p.id !== id);
@@ -273,21 +310,35 @@ async function deleteProfissional(id) {
 
 // -------------------- SERVIÇO --------------------
 async function addServico(s) {
-  const n = { ...s, id: uuid() };
+  const nome = s.nome.trim();
+  if (!nome) { toast('Nome é obrigatório', 'error'); return null; }
+
+  if (existeNomeDuplicado('servicos', nome)) {
+    toast('Já existe um serviço com este nome.', 'error');
+    return null;
+  }
+
+  const n = { ...s, id: uuid(), nome };
   await dbPut('servicos', n);
   state.servicos.push(n);
   updateUI();
+  toast('Serviço criado!', 'success');
   return n;
 }
-
 async function updateServico(id, data) {
+  if (data.nome) {
+    const nome = data.nome.trim();
+    if (existeNomeDuplicado('servicos', nome, id)) {
+      toast('Já existe um serviço com este nome.', 'error');
+      return;
+    }
+  }
   const i = state.servicos.findIndex(s => s.id === id);
   if (i === -1) return;
   state.servicos[i] = { ...state.servicos[i], ...data };
   await dbPut('servicos', state.servicos[i]);
   updateUI();
 }
-
 async function deleteServico(id) {
   await dbDelete('servicos', id);
   state.servicos = state.servicos.filter(s => s.id !== id);

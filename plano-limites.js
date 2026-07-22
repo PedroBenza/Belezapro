@@ -84,3 +84,5 @@ function upgradePara(plano) {
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
   closeModal('modal-upgrade');
 }
+// Expor globalmente para os botões onclick no HTML
+window.upgradePara = upgradePara;

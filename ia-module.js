@@ -247,32 +247,63 @@ function renderIAResumo() {
 async function perguntarIA(pergunta) {
   const plano = getPlanoAtual();
   const iaDia = PLANOS[plano].iaDia;
-  if (iaDia === 0) { mostrarModalUpgrade('O Agente IA está disponível no plano Pro (5 perguntas/dia) e Premium (ilimitado).'); return null; }
-  const chaveData = 'ia_perguntas_' + hoje();
-  const usadas = parseInt(localStorage.getItem(chaveData) || '0');
-  if (iaDia !== Infinity && usadas >= iaDia) {
-    if (plano === 'pro') { mostrarModalUpgrade('Atingiste o limite de 5 perguntas/dia do plano Pro. Faz upgrade para Premium para perguntas ilimitadas.'); } else { toast('Limite de perguntas atingido.', 'warning'); }
+  if (iaDia === 0) {
+    mostrarModalUpgrade('O Agente IA está disponível no plano Pro (5 perguntas/dia) e Premium (ilimitado).');
     return null;
   }
+
+  // ================================================================
+  //  CORREÇÃO: chaveData definida antes de ser usada
+  // ================================================================
+  const chaveData = 'ia_perguntas_' + (state.config.salaoId || 'local') + '_' + hoje();
+  const usadas = parseInt(localStorage.getItem(chaveData) || '0');
+
+  if (iaDia !== Infinity && usadas >= iaDia) {
+    if (plano === 'pro') {
+      mostrarModalUpgrade('Atingiste o limite de 5 perguntas/dia do plano Pro. Faz upgrade para Premium para perguntas ilimitadas.');
+    } else {
+      toast('Limite de perguntas atingido.', 'warning');
+    }
+    return null;
+  }
+
   const contexto = buildContextoIA();
   if (contexto && contexto.erro) {
     toast(contexto.erro, 'warning');
     return null;
   }
+
   try {
     const resp = await fetch(IA_EDGE_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
-      body: JSON.stringify({ pergunta, contexto, plano, salaoId: state.config.salaoId || 'local', historico: iaHistorico })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        pergunta,
+        contexto,
+        plano,
+        salaoId: state.config.salaoId || 'local',
+        historico: iaHistorico
+      })
     });
+
     if (!resp.ok) {
-      if (resp.status === 429) { mostrarModalUpgrade('Limite de perguntas atingido. Faz upgrade para continuar.'); return null; }
-      if (resp.status === 503) return '⚠️ Agente IA temporariamente indisponível. Tenta dentro de momentos.';
+      if (resp.status === 429) {
+        mostrarModalUpgrade('Limite de perguntas atingido. Faz upgrade para continuar.');
+        return null;
+      }
+      if (resp.status === 503) {
+        return '⚠️ Agente IA temporariamente indisponível. Tenta dentro de momentos.';
+      }
       return '⚠️ Erro ao contactar o agente IA. Contacta o suporte BeautyPro.';
     }
+
     const data = await resp.json();
     localStorage.setItem(chaveData, String(usadas + 1));
     document.getElementById('ia-contador').textContent = String(usadas + 1);
+
     const resposta = data.resposta || 'Não consegui responder. Tenta de novo.';
     iaHistorico.push({ pergunta, resposta });
     if (iaHistorico.length > 6) iaHistorico = iaHistorico.slice(-6);
@@ -281,7 +312,6 @@ async function perguntarIA(pergunta) {
     return 'Sem ligação à internet. O agente IA necessita de conexão para responder.';
   }
 }
-
 const IA_NOME_KEY = 'bp_ia_nome';
 // CORREÇÃO (relatório Benza AI): nome fixado — deixa de ler o localStorage / permitir renomear.
 function getNomeIA() { return 'Benza'; }
