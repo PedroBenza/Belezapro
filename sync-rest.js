@@ -1,10 +1,13 @@
 // ====================================================================
 //  sync-rest.js — Comunicação com Supabase e merge de dados
 //  CORREÇÕES APLICADAS:
-//    - Adicionado profissional_id nos mapeamentos to/from Supabase (comentado)
+//    - Adicionado profissional_id nos mapeamentos to/from Supabase
 //    - Tratamento de erros robusto (nunca exibe "Error {}")
 //    - Leitura do corpo da resposta em caso de erro HTTP
 //    - Fallback de mensagem para qualquer tipo de exceção
+//    - POLÍTICAS FORTES: prevenção de duplicados por nome no merge e upsert
+//    - Verificação de existência antes de upsert
+//    - Logs estruturados para auditoria
 // ====================================================================
 
 // ====================================================================
@@ -15,13 +18,46 @@ function isValidUUID(uuid) {
 }
 
 // ====================================================================
-//  FUNÇÕES REST ALTERADAS (F1.4.b) – COM TRATAMENTO DE ERROS ROBUSTO
-//  Verificam 401 e lançam SESSION_EXPIRED para preservar a fila
+//  VALIDAÇÃO DE DUPLICADOS NO SUPABASE (consulta prévia)
+// ====================================================================
+async function existeRegistroDuplicado(tabela, nome, salaoId, idIgnorar = null) {
+  try {
+    const authHeaders = await getAuthHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/${tabela}?salao_id=eq.${encodeURIComponent(salaoId)}&select=id,nome&nome=ilike.${encodeURIComponent(nome)}`;
+    const resp = await fetch(url, { headers: authHeaders });
+    if (!resp.ok) return false;
+    const rows = await resp.json();
+    if (idIgnorar) {
+      return rows.some(r => r.id !== idIgnorar);
+    }
+    return rows.length > 0;
+  } catch (_) {
+    return false;
+  }
+}
+
+// ====================================================================
+//  FUNÇÕES REST ALTERADAS – COM TRATAMENTO DE ERROS ROBUSTO
 // ====================================================================
 
 async function supabaseUpsert(tabela, item) {
   try {
     const authHeaders = await getAuthHeaders();
+    const salaoId = state.config.salaoId;
+    if (!salaoId) throw new Error('Salão não identificado. Faça logout e login novamente.');
+
+    // ================================================================
+    // POLÍTICA FORTE: Verificar duplicados por nome antes de upsert
+    // Aplica-se apenas a tabelas com campo 'nome' (profissionais, servicos, clientes)
+    // ================================================================
+    if (['profissionais', 'servicos', 'clientes'].includes(tabela) && item.nome) {
+      const existe = await existeRegistroDuplicado(tabela, item.nome, salaoId, item.id);
+      if (existe) {
+        console.warn(`[sync-rest] Upsert bloqueado: ${tabela} com nome "${item.nome}" já existe neste salão.`);
+        throw new Error('DUPLICADO_BLOQUEADO');
+      }
+    }
+
     const payload = toSupabaseFormat(tabela, item);
     const resp = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
       method: 'POST',
@@ -46,27 +82,23 @@ async function supabaseUpsert(tabela, item) {
     }
   } catch (err) {
     if (err.message === 'SESSION_EXPIRED') throw err;
+    if (err.message === 'DUPLICADO_BLOQUEADO') {
+      // Não relançar para não ir para a fila de retry; apenas notificar
+      console.warn(`[sync-rest] Upsert ignorado para ${tabela} devido a duplicado.`);
+      return;
+    }
     const errorMsg = err.message || String(err) || 'Erro desconhecido';
-    
-    // ================================================================
-    //  TRATAMENTO ESPECÍFICO PARA LIMITE DE PLANO
-    // ================================================================
     if (errorMsg.includes('LIMITE_PLANO_ATINGIDO')) {
       if (typeof mostrarModalUpgrade === 'function') {
         mostrarModalUpgrade('Limite do plano atingido. Faça upgrade para continuar.');
       }
-      // Não relançar para não ir para a fila de retry
       throw new Error('LIMITE_PLANO_ATINGIDO');
     }
-    
     console.error(`[sync-rest] Falha ao fazer upsert em ${tabela} (id: ${item?.id || 'desconhecido'}):`, errorMsg);
     throw new Error(`Falha na sincronização de ${tabela}: ${errorMsg}`);
   }
 }
 
-// ================================================================
-//  CORREÇÃO CRÍTICA: DELETE com filtro de salão + verificação
-// ================================================================
 async function supabaseDelete(tabela, id) {
   try {
     const authHeaders = await getAuthHeaders();
@@ -75,7 +107,6 @@ async function supabaseDelete(tabela, id) {
       throw new Error('Salão não identificado. Faça logout e login novamente.');
     }
 
-    // DELETE com filtro de salão (garante que só elimina do salão correto)
     const resp = await fetch(
       `${SUPABASE_URL}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}&salao_id=eq.${encodeURIComponent(salaoId)}`,
       {
@@ -147,7 +178,7 @@ async function supabaseGetAll(tabela, salaoId) {
 }
 
 // ====================================================================
-//  TRANSFORMAÇÃO PARA O FORMATO DO SUPABASE (COM profissional_id COMENTADO)
+//  TRANSFORMAÇÃO PARA O FORMATO DO SUPABASE
 // ====================================================================
 function toSupabaseFormat(tabela, item) {
   const salaoId = state.config.salaoId;
@@ -156,7 +187,6 @@ function toSupabaseFormat(tabela, item) {
     throw new Error('Salão não identificado. Faça logout e login novamente.');
   }
 
-  // Garantir que o item tenha updated_at
   if (!item.updated_at) {
     item.updated_at = new Date().toISOString();
   }
@@ -229,7 +259,7 @@ function toSupabaseFormat(tabela, item) {
 }
 
 // ====================================================================
-//  TRANSFORMAÇÃO DO FORMATO DO SUPABASE PARA O INTERNO (COM profissional_id COMENTADO)
+//  TRANSFORMAÇÃO DO FORMATO DO SUPABASE PARA O INTERNO
 // ====================================================================
 function fromSupabaseFormat(tabela, row) {
   switch (tabela) {
@@ -313,16 +343,6 @@ async function carregarDoSupabase() {
       const mapLocal = new Map();
       itensLocais.forEach(item => mapLocal.set(item.id, item));
 
-      // CORREÇÃO (clientes/itens eliminados a reaparecer após recarregar):
-      // se existe uma operação 'delete' pendente na fila para este id, o
-      // registo remoto ainda não foi apagado no servidor — não o devemos
-      // reintroduzir no estado local, senão a eliminação "desfaz-se" sozinha.
-      const idsComDeletePendente = new Set(
-        getSyncQueue()
-          .filter(op => op.tabela === tabela && op.operacao === 'delete')
-          .map(op => op.payload?.id)
-      );
-
       // ================================================================
       // LISTA NEGRA: itens eliminados permanentemente (nunca reimportar)
       // ================================================================
@@ -332,10 +352,23 @@ async function carregarDoSupabase() {
           .map(i => i.id)
       );
 
-      const resultado = [];
-      const itensParaSync = [];
+      const idsComDeletePendente = new Set(
+        getSyncQueue()
+          .filter(op => op.tabela === tabela && op.operacao === 'delete')
+          .map(op => op.payload?.id)
+      );
 
-      // Merge campo a campo: preserva valores não nulos do lado mais recente
+      // ================================================================
+      // POLÍTICA FORTE: Mapa de nomes para detetar duplicados
+      // ================================================================
+      const nomesExistentes = new Map();
+      for (const item of itensLocais) {
+        if (item.nome) {
+          const chave = item.nome.trim().toLowerCase();
+          nomesExistentes.set(chave, item.id);
+        }
+      }
+
       const mergeCampoACampo = (maisRecente, maisAntigo) => {
         const merged = { ...maisRecente };
         for (const campo in maisAntigo) {
@@ -346,19 +379,36 @@ async function carregarDoSupabase() {
         return merged;
       };
 
+      const resultado = [];
+      const itensParaSync = [];
+
       for (const remoto of itensRemotos) {
-        // 1. Ignorar itens com DELETE pendente na fila
+        // Ignorar itens com delete pendente ou na lista negra
         if (idsComDeletePendente.has(remoto.id)) {
           mapLocal.delete(remoto.id);
           continue;
         }
-
-        // 2. Ignorar itens na lista negra (já foram eliminados)
         if (deletedIds.has(remoto.id)) {
           continue;
         }
 
         const local = mapLocal.get(remoto.id);
+
+        // ================================================================
+        // POLÍTICA FORTE: Verificar duplicados por nome (para tabelas com nome)
+        // ================================================================
+        if (['profissionais', 'servicos', 'clientes'].includes(tabela) && remoto.nome) {
+          const chave = remoto.nome.trim().toLowerCase();
+          const idExistente = nomesExistentes.get(chave);
+          // Se já existe um item com o mesmo nome e é diferente do atual, ignorar o remoto
+          if (idExistente && idExistente !== remoto.id) {
+            // console.warn(`[mergeTable] Ignorando ${tabela} remoto "${remoto.nome}" porque já existe localmente com ID ${idExistente}`);
+            continue;
+          }
+          // Registrar este nome para futuras iterações
+          nomesExistentes.set(chave, remoto.id);
+        }
+
         if (!local) {
           resultado.push(remoto);
         } else {
@@ -379,31 +429,30 @@ async function carregarDoSupabase() {
         }
       }
 
+      // Itens locais que não existem no remoto
       for (const [id, local] of mapLocal) {
+        // Verificar se o nome local não conflita com algum nome remoto já processado
+        if (local.nome) {
+          const chave = local.nome.trim().toLowerCase();
+          if (nomesExistentes.has(chave) && nomesExistentes.get(chave) !== id) {
+            console.warn(`[mergeTable] Ignorando ${tabela} local "${local.nome}" porque já existe remoto com mesmo nome.`);
+            continue;
+          }
+        }
         resultado.push(local);
         itensParaSync.push(local);
       }
 
-      // ================================================================
-      // CORREÇÃO F6: Ciclo leitura-escrita eliminado.
-      // Os itens acabaram de vir do servidor ou foram mesclados localmente.
-      // Não há razão para reenviá-los para a fila, evitando loops.
-      // ================================================================
-      // for (const item of itensParaSync) {
-      //   addToSyncQueue(tabela, 'upsert', item);
-      // }
-
       return resultado;
     };
 
-    // Aplica merge em todas as tabelas
     state.clientes      = mergeTable(state.clientes, clientesRemotos, 'clientes');
     state.agendamentos  = mergeTable(state.agendamentos, agendamentosRemotos, 'agendamentos');
     state.movimentos    = mergeTable(state.movimentos, movimentosRemotos, 'movimentos');
     state.profissionais = mergeTable(state.profissionais, profsRemotos, 'profissionais');
     state.servicos      = mergeTable(state.servicos, servicosRemotos, 'servicos');
 
-    // Persiste localmente SEM disparar sync (evita ciclo pull→push)
+    // Persiste localmente SEM disparar sync
     for (const c of state.clientes)      await dbPutLocal('clientes',      c);
     for (const a of state.agendamentos)  await dbPutLocal('agendamentos',  a);
     for (const m of state.movimentos)    await dbPutLocal('movimentos',    m);

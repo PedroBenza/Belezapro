@@ -136,8 +136,22 @@ async function loadState(trocouDeSalao = false) {
     await dbPut('config', { id: 'trialInicio', key: 'trialInicio', value: state.config.trialInicio });
     await dbPut('config', { id: 'plano', key: 'plano', value: 'trial' });
   }
-  if (safeProfs.length === 0) { for (const p of profsPadraoComIdProprio) await dbPut('profissionais', p); }
-  if (safeServicos.length === 0) { for (const s of servicosPadraoComIdProprio) await dbPut('servicos', s); }
+
+  // ============================================================
+  // CORREÇÃO — INSERIR DEFAULTS APENAS SE A BASE DE DADOS ESTIVER VAZIA
+  // ============================================================
+  if (safeProfs.length === 0) {
+    const existing = await dbGetAll('profissionais');
+    if (existing.length === 0) {
+      for (const p of profsPadraoComIdProprio) await dbPut('profissionais', p);
+    }
+  }
+  if (safeServicos.length === 0) {
+    const existing = await dbGetAll('servicos');
+    if (existing.length === 0) {
+      for (const s of servicosPadraoComIdProprio) await dbPut('servicos', s);
+    }
+  }
 
   if (state.config.salaoId && navigator.onLine) {
     await garantirSalaoRemoto();

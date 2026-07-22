@@ -32,6 +32,23 @@ document.addEventListener('DOMContentLoaded', async function init() {
   // chamada antecipada o texto ficava errado durante todo o checkSession().
   if (typeof atualizarIndicadorSync === 'function') atualizarIndicadorSync();
 
+  // ============================================================
+  // CORREÇÃO: Limpar fila de sincronização antiga para evitar
+  // reenvio de operações que possam recriar duplicados
+  // ============================================================
+  const SYNC_QUEUE_KEY = 'bp_sync_queue';
+  try {
+    const raw = localStorage.getItem(SYNC_QUEUE_KEY);
+    if (raw) {
+      const queue = JSON.parse(raw);
+      // Remove operações para profissionais e serviços (já limpos no Supabase)
+      const filtered = queue.filter(op => op.tabela !== 'profissionais' && op.tabela !== 'servicos');
+      localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(filtered));
+    }
+  } catch (_) {
+    // Ignora erros de parsing
+  }
+
   // Abrir IndexedDB local (offline-first)
   // Item 2.4: qualquer falha aqui é comunicada de forma clara — nunca
   // silenciosa — e nunca deixa o utilizador perante um ecrã sem saída.
@@ -116,6 +133,42 @@ document.addEventListener('DOMContentLoaded', async function init() {
         fabEl.classList.remove('fab-scrolling');
       }, 250);
     }, { passive: true });
+  }
+
+  // ============================================================
+  //  CORREÇÃO: HEADER FIXO – ajuste automático do padding-top
+  //  para que o conteúdo nunca fique por baixo do header
+  //  (com fallback para garantir que funciona mesmo se o header
+  //  ainda não estiver completamente renderizado)
+  // ============================================================
+  function ajustarPaddingHeader() {
+    const header = document.querySelector('.app-header');
+    const main = document.querySelector('.main-content');
+    if (header && main) {
+      const altura = header.offsetHeight;
+      if (altura > 0) {
+        main.style.paddingTop = altura + 'px';
+      } else {
+        // Fallback: tentar novamente após 100ms se a altura for 0
+        setTimeout(ajustarPaddingHeader, 100);
+      }
+    }
+  }
+
+  // Aplicar com um pequeno atraso para garantir que o DOM está completamente montado
+  setTimeout(ajustarPaddingHeader, 50);
+
+  // Reaplicar sempre que a janela for redimensionada
+  window.addEventListener('resize', ajustarPaddingHeader);
+
+  // Reaplicar também quando o conteúdo for carregado (ex: após login)
+  // Usamos MutationObserver para detetar mudanças no header (ex: nome do salão)
+  const headerObserver = new MutationObserver(() => {
+    ajustarPaddingHeader();
+  });
+  const headerEl = document.querySelector('.app-header');
+  if (headerEl) {
+    headerObserver.observe(headerEl, { childList: true, subtree: true, characterData: true });
   }
 });
 

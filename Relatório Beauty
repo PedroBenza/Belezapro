@@ -1,0 +1,1181 @@
+RELATÓRIO DE AUDITORIA TÉCNICA – BEAUTYPRO
+
+Resumo Executivo
+
+A aplicação BeautyPro é uma SPA (Single Page Application) offline-first para gestão de salões de beleza, construída em JavaScript puro (sem frameworks), com Supabase como backend e IndexedDB para persistência local. A arquitetura é modular (ficheiros separados), mas fortemente acoplada via variáveis globais e ausência de módulos ES6. A aplicação cumpre os requisitos funcionais principais (autenticação, CRUD, sincronização, IA, gráficos, PWA), mas apresenta oportunidades significativas de melhoria em organização, segurança, performance e manutenibilidade.
+
+A auditoria avaliou 40+ ficheiros (HTML, CSS, JS, JSON). A nota global de qualidade é 6.1/10, refletindo uma base sólida mas com débitos técnicos que exigem intervenção para garantir escalabilidade e robustez a longo prazo.
+
+---
+
+1. ARQUITETURA
+
+1.1. Visão Geral
+
+A aplicação segue uma arquitetura cliente-servidor com sincronização offline-first. O fluxo é:
+
+· Estado global (state) mantido em memória.
+· Persistência local via IndexedDB (fallback para localStorage).
+· Backend Supabase (autenticação + REST API).
+· Fila de sincronização (localStorage) para operações pendentes quando offline.
+· UI renderizada por funções que manipulam diretamente o DOM.
+· PWA com Service Worker para cache do app shell.
+
+1.2. Árvore de Ficheiros e Responsabilidades
+
+```
+/
+├── index.html                 # Estrutura HTML, modais, pontos de entrada
+├── manifest.json              # Configuração PWA
+├── sw.js / sw.template.js / build.js  # Service Worker e build automático
+├── CHECKLIST_QA.md            # Checklist de regressão (documentação de teste)
+
+├── CSS/
+│   ├── base-variaveis.css      # Reset, variáveis de design, fontes
+│   ├── componentes-base.css    # Botões, cards, inputs, CTA "Venda"
+│   ├── layout-nav-tabs.css     # Layout, header, navegação inferior, abas
+│   ├── kpis-caixa-listas.css   # KPIs, ações da caixa, listas
+│   ├── menus-agenda.css        # Menu de ações (⋮), agenda, empty state
+│   ├── modais-toast-fab.css    # Modais, toast, FAB
+│   ├── login-carrinho-venda.css # Login, carrinho, recibo, detalhe venda
+│   ├── historico-fecho-equipa.css # Histórico, fecho caixa, profissionais
+│   ├── ia.css                  # Estilos da IA Benza
+│   ├── plano-filtros-grafico.css # Planos, filtros, gráfico
+│   ├── impressao-acessibilidade.css # Impressão térmica, foco, contraste
+│   ├── design-tokens-extra.css # Tokens estendidos (paleta, utilitários)
+│   ├── dark-mode.css           # Modo escuro (prefers-color-scheme)
+│   └── splash-sparkline.css    # Splash screen, sparkline do ticket médio
+
+├── JavaScript/
+│   ├── core-constants.js       # Constantes (URLs, chaves, planos, defaults)
+│   ├── core-utils.js           # Utilitários (uuid, fmtKz, toast, confirm modal)
+│   ├── core-state.js           # Definição do estado global (`state`, `activeTab`)
+│   ├── db-indexeddb.js         # Camada de persistência (IndexedDB + localStorage)
+│   ├── auth-supabase.js        # Autenticação Supabase, login, sessão
+│   ├── sync-queue.js           # Fila de sincronização (overrides de dbPut/dbDelete)
+│   ├── sync-rest.js            # Comunicação REST com Supabase, merge
+│   ├── plano-limites.js        # Lógica de planos, limites, upgrade
+│   ├── crud-operations.js      # Operações CRUD (loadState, add/update/delete)
+│   ├── ui-render-dashboard-agenda.js # Renderização dashboard e agenda
+│   ├── ui-render-clientes-caixa-equipa.js # Renderização clientes, caixa, equipa
+│   ├── chart-module.js         # Gráfico semanal com swipe
+│   ├── vendas-modais.js        # Carrinho, sparkline, recibo, modal serviço
+│   ├── detalhes-acessibilidade.js # Detalhes (faturamento, agenda, fecho), focus trap
+│   ├── ui-events-navegacao.js  # Ativação abas, RBAC, permissões
+│   ├── eventos-cadastros.js    # Eventos: login, menu, logout, agenda, clientes, profissionais
+│   ├── eventos-caixa-vendas.js # Eventos: despesa, fundo, venda, fecho
+│   ├── eventos-globais.js      # Eventos: navegação agenda, menu linha, online/offline
+│   ├── ia-module.js            # IA Benza (contexto, perguntas, histórico, onboarding)
+│   └── main.js                 # Inicialização da aplicação
+```
+
+1.3. Mapa de Dependências entre Módulos (Direcional)
+
+```
+core-constants.js          → usado por auth-supabase, sync-rest, sync-queue, plano-limites, crud-operations, ia-module
+core-utils.js              → usado por quase todos (toast, uuid, fmtKz, showConfirmModal, etc.)
+core-state.js              → define state, usado por todos os módulos que leem/escrevem estado
+db-indexeddb.js            → dependência de crud-operations, sync-queue, main
+auth-supabase.js           → depende de core-constants, core-utils, core-state; usado por main, sync-rest, crud-operations
+sync-queue.js              → depende de core-constants, core-state, db-indexeddb, sync-rest; modifica dbPut/dbDelete
+sync-rest.js               → depende de auth-supabase (getAuthHeaders), core-constants, core-state, core-utils
+plano-limites.js           → depende de core-constants, core-utils, core-state
+crud-operations.js         → depende de core-constants, core-utils, core-state, db-indexeddb, sync-queue, sync-rest, plano-limites, auth-supabase
+ui-render-dashboard-agenda.js → depende de core-utils, core-state, crud-operations (getProfissionalNome)
+ui-render-clientes-caixa-equipa.js → depende de core-utils, core-state, crud-operations, plano-limites
+chart-module.js            → depende de core-utils, core-state
+vendas-modais.js           → depende de core-utils, core-state, crud-operations, ui-render-clientes-caixa-equipa (populateVendaSelects)
+detalhes-acessibilidade.js → depende de core-utils, core-state, crud-operations, ui-render-dashboard-agenda (getProfissionalNome)
+ui-events-navegacao.js     → depende de core-utils, core-state
+eventos-cadastros.js       → depende de todos os anteriores (core, auth, crud, ui-render...)
+eventos-caixa-vendas.js    → depende de todos os anteriores (core, auth, crud, ui-render, vendas-modais, detalhes)
+eventos-globais.js         → depende de core, auth, crud, ui-render, sync-queue, detalhes
+ia-module.js               → depende de core-constants, core-utils, core-state, plano-limites, crud-operations, ui-render-clientes-caixa-equipa
+main.js                    → depende de db-indexeddb, auth-supabase, sync-queue, ui-render..., chart-module, eventos...
+```
+
+Observações:
+
+· Acoplamento elevado: todos os módulos partilham o mesmo estado global e funções globais, criando uma rede de dependências em que uma alteração pode afetar muitos ficheiros.
+· Nenhum encapsulamento: não há módulos ES6, todas as funções e variáveis são globais (exceto algumas let em escopo de ficheiro).
+· Dependências circulares: indiretamente, através do estado global, há dependências circulares (ex: crud-operations chama updateUI, que chama renderDashboard, que usa crud). Isto torna o fluxo difícil de seguir.
+
+1.4. Acoplamento e Coesão
+
+· Baixa coesão em ficheiros como crud-operations.js (operações CRUD + loadState + saveConfig + validações) e eventos-globais.js (múltiplos eventos não relacionados).
+· Acoplamento forte via variáveis globais (ex: state, toast, fmtKz, openModal, closeModal) – qualquer módulo pode modificar qualquer parte do sistema.
+· Ponto positivo: separação de responsabilidades em camadas: core, db, auth, sync, UI, eventos, IA. A estrutura de diretórios (embora todos na raiz) sugere uma organização pensada.
+
+---
+
+2. FLUXO DA APLICAÇÃO
+
+2.1. Inicialização (main.js – DOMContentLoaded)
+
+1. UI inicial: login-view visível, app-view oculta.
+2. Atualização do indicador de sincronização (online/offline).
+3. Abertura da IndexedDB (openDB()). Se falhar, toast de erro.
+4. Restauração de preferências locais (filtro clientes, período do gráfico).
+5. Verificação de sessão (checkSession() – auth-supabase.js).
+   · Se sessão ativa: esconde login, mostra app, carrega perfil (profiles), define salaoId, role, deteta troca de salão, aplica permissões, sincroniza config do servidor, carrega estado (loadState), ativa aba, atualiza indicador, toast de boas-vindas, onboarding se primeira vez.
+   · Se sem sessão: fica no ecrã de login.
+6. Remoção da splash screen (após 1.5s, com timeout de emergência).
+7. Atualização da IA offline (se aplicável).
+8. Acessibilidade (aplicarAcessibilidade).
+9. Intervalo de sincronização periódica (30s) para buscar alterações remotas.
+10. Registo do Service Worker para PWA.
+
+2.2. Autenticação
+
+· Login: login-btn → supabaseClient.auth.signInWithPassword → perfil → definição do estado → loadState → UI.
+· Logout: logout-btn → showConfirmModal → supabaseClient.auth.signOut → reload.
+· Listener de estado (onAuthStateChange) – se SIGNED_OUT sem ser voluntário, mostra toast "sessão expirada" e volta ao login.
+· Sessão restaurada automaticamente via checkSession no arranque.
+
+2.3. Sincronização (Offline-First)
+
+· Escrita local: dbPut (IndexedDB) sempre executado primeiro.
+· Overrides (sync-queue.js) interceptam dbPut e dbDelete:
+  · Se online, tenta supabaseUpsert / supabaseDelete imediatamente.
+  · Se falha, adiciona à fila de sincronização (localStorage).
+  · Se offline, adiciona à fila.
+· Fila é processada por flushSyncQueue (chamada no login, após carregar remoto, e periodicamente).
+· Pull de dados remotos: carregarDoSupabase busca todas as tabelas do salão e faz merge campo a campo com dados locais, preferindo o mais recente (updated_at). Evita reimportar itens com delete pendente ou em lista negra.
+· Indicador de sincronização mostra contagem de pendentes.
+
+2.4. Renderização e Interação
+
+· Navegação por abas (bottom nav) → activeTab guardado no localStorage.
+· Cada aba tem uma função de renderização: renderDashboard, renderAgendaFull, renderClientes, renderCaixa, renderProfissionais+Servicos, IA já renderizada por ia-module.
+· Eventos: delegados com addEventListener no document (alguns) ou diretamente nos elementos.
+· Modais: abertura/fecho via openModal/closeModal (controla classe .open).
+· Carrinho de vendas: mantido em cartItems (array) e persistido em localStorage para recuperação ao reabrir modal.
+· Gráfico: canvas com desenho personalizado, suporte a swipe para mudar período.
+· IA: chat com histórico guardado em localStorage por salão, sugestões rápidas, insights automáticos.
+
+---
+
+3. ESTADO GLOBAL
+
+Definição: core-state.js declara let state = { ... } e let activeTab = localStorage.getItem(...) || 'dashboard';.
+
+Estrutura:
+
+```js
+state = {
+  config: { storeName, fundo, plano, trialInicio, salaoId, userRole?, userId? },
+  clientes: [],
+  agendamentos: [],
+  movimentos: [],
+  profissionais: [],
+  servicos: [],
+  fechos_caixa: [],
+  agendaDataAtual: 'YYYY-MM-DD',
+  histPeriodo: 'hoje',
+  carrinho: [],          // duplicado? usado apenas no modal de venda (mas também existe cartItems global em vendas-modais.js)
+  filtroClientes: 'todos',
+  chartPeriodo: 'semana',
+  chartOffset: 0,
+  chartMostrarValores: false,
+};
+```
+
+Onde é criado: apenas uma vez no início.
+
+Onde é alterado:
+
+· auth-supabase.js: define salaoId, storeName, userRole.
+· crud-operations.js: loadState atualiza config, clientes, agendamentos, movimentos, profissionais, servicos, fechos_caixa, filtros, chart.
+· sync-rest.js: carregarDoSupabase faz merge e atualiza as listas.
+· eventos-caixa-vendas.js: atualiza state.config.fundo.
+· vendas-modais.js: usa cartItems separado, não o state.carrinho (este não é utilizado).
+· eventos-globais.js: state.agendaDataAtual alterado.
+· ui-events-navegacao.js: activeTab alterado.
+
+Onde é consumido: em praticamente todos os módulos de UI e CRUD.
+
+Riscos:
+
+· Mutabilidade global: qualquer parte da aplicação pode alterar o estado sem controlo, dificultando rastreio de bugs.
+· Falta de imutabilidade: as listas são arrays mutáveis – operações como push e splice são frequentes.
+· Duplicação: state.carrinho não é usado (o carrinho de vendas usa cartItems em vendas-modais.js), criando confusão.
+· Persistência parcial: nem todas as propriedades são persistidas (ex: agendaDataAtual não está no localStorage).
+· Sincronização: o estado pode divergir entre memória e IndexedDB se alguma operação falhar (embora dbPut seja chamado na maioria das alterações).
+
+Oportunidades de melhoria:
+
+· Adotar um padrão de gerenciamento de estado como Redux ou um singleton com getters/setters.
+· Usar Object.freeze ou immer para garantir imutabilidade.
+· Remover state.carrinho obsoleto.
+· Persistir agendaDataAtual para restaurar após recarregar.
+
+---
+
+4. QUALIDADE DO CÓDIGO
+
+4.1. JavaScript
+
+Módulo Problemas Boas práticas
+core-utils toast e fmtKz são globais; showConfirmModal mistura UI com lógica. Funções puras (uuid, hoje, escHtml).
+auth-supabase logoutVoluntarioEmCurso variável global; checkSession muito longa (120+ linhas). Bom uso de onAuthStateChange; tratamento de erro com Sentry.
+sync-queue Override de funções dbPut/dbDelete é arriscado (side-effect global); flushSyncQueue tem lógica de retry complexa. Implementação de backoff exponencial.
+crud-operations Funções longas (loadState ~100 linhas); duplicação de validação (ex: duplicados em clientes, profissionais, serviços). Separação de cada operação CRUD.
+ui-render-* Manipulação direta de innerHTML com escHtml (boa prática); funções de renderização longas (~80-100 linhas). Uso de templates literais; animateKpi com animação.
+eventos-* Muitos listeners soltos; eventos-globais.js agrupa eventos não relacionados. Uso de delegação de eventos em alguns casos.
+ia-module Lógica pesada (contexto, insights, chat) num único ficheiro (~500 linhas); buildContextoIA longa. Bom uso de localStorage para histórico.
+
+Padrões observados:
+
+· Ausência de módulos ES6 – todas as funções são globais, poluindo o escopo global.
+· Duplicação de código: validação de duplicados repete-se em clientes, profissionais, serviços.
+· Responsabilidades misturadas: crud-operations faz load, save, CRUD, e ainda chama updateUI (que é renderização).
+· Falta de testes automatizados (apenas runTests em ia-module com asserts básicos).
+
+Complexidade Ciclomática: várias funções ultrapassam 50 linhas, com múltiplos if/else aninhados, tornando a manutenção difícil.
+
+4.2. CSS
+
+Pontos fortes:
+
+· Separação clara por componente/layout.
+· Uso consistente de variáveis CSS (cores, espaçamento, radius, fontes).
+· Suporte a dark mode via prefers-color-scheme.
+· Animações suaves e acessíveis (prefers-reduced-motion).
+· Estilos de impressão dedicados.
+
+Pontos fracos:
+
+· Algumas classes duplicadas (ex: .btn-sm e .btn-xs com definições próximas).
+· !important em alguns lugares (ex: #modal-fecho button para forçar borderRadius) – quebra a cascata.
+· Ausência de sistema de grid flexível (usam display:flex manual).
+· Código morto (ex: .prof-card não utilizado).
+
+4.3. HTML
+
+· Estrutura semântica razoável (header, main, nav, section).
+· Uso de aria-* atributos para acessibilidade (role, aria-labelledby, aria-modal).
+· Modais com role="dialog" e aria-modal="true".
+· Muitos elementos com id para manipulação direta, o que é aceitável para SPA.
+· HTML muito extenso (modais duplicados, etc.) – poderia ser gerado dinamicamente para reduzir tamanho.
+
+---
+
+5. PERFORMANCE
+
+5.1. Renderização
+
+· Atualizações completas do DOM em cada renderização (ex: renderClientes recria toda a lista). Isto pode causar reflows e ser ineficiente para grandes conjuntos de dados.
+· Uso de innerHTML – eficiente mas substitui todo o conteúdo, perdendo listeners (embora usem delegação em alguns casos).
+· Animações CSS com transform e opacity, bem otimizadas.
+· Gráfico canvas – redesenha completamente a cada atualização, mas é leve.
+
+5.2. Manipulação de Dados
+
+· Loops pesados em buildContextoIA (vários filter e reduce em arrays grandes). Pode tornar-se lento com muitos dados.
+· Sincronização periódica a cada 30s com carregarDoSupabase – pode ser pesado se muitas tabelas e dados.
+
+5.3. IndexedDB
+
+· Operações assíncronas com await, mas sem transações otimizadas (ex: várias chamadas em sequência para dbPut em saveConfig).
+· loadState faz Promise.all para buscar todas as tabelas – bom.
+
+5.4. Service Worker
+
+· Cache do app shell (stale-while-revalidate) – boa prática.
+· Promise.allSettled para evitar falha total em caso de recurso externo.
+
+5.5. Memória
+
+· Vazamentos potenciais: listeners em elementos que são substituídos (ex: botões "Finalizar" dentro de renderAgendaFull são recriados, mas os listeners anteriores não são removidos explicitamente – no entanto, como são substituídos pelo innerHTML, os anteriores são garbage-collected se não houver referências).
+· Estado global mantém todos os dados em memória, o que pode ser pesado para grandes volumes.
+
+5.6. Sugestões de Melhoria
+
+· Virtualização para listas longas (ex: clientes, agendamentos).
+· Debounce em pesquisas (já existe para pesquisa de clientes com searchTimer).
+· Memoização de resultados de cálculos (ex: total de vendas por período) para evitar recomputação.
+· Indexação no IndexedDB para consultas mais rápidas (embora atualmente as buscas sejam feitas em arrays em memória).
+
+---
+
+6. SEGURANÇA
+
+6.1. Autenticação e Autorização (RBAC)
+
+· Bom: Supabase Auth gerencia tokens; getAuthHeaders valida sessão; aplicarPermissoes oculta/desativa elementos com base em data-role.
+· Risco: A lógica de permissões é apenas no frontend – qualquer utilizador com conhecimentos pode manipular o DOM para ver elementos restritos. A verdadeira segurança deve estar no backend (RLS no Supabase), que aparenta estar configurada (ver sync-rest.js com filtro salao_id).
+
+6.2. Validação de Entradas
+
+· Bom: escHtml para escapar HTML em saídas.
+· Fraco: innerHTML usado com dados do utilizador sem escHtml em alguns lugares (ex: fecho-conteudo em abrirFechoCaixa usa template com dados sem escapar – risco XSS). Ver linha: document.getElementById('fecho-conteudo').innerHTML = ... com dados vindos de state.movimentos que podem ser manipulados.
+· Validação no servidor: Supabase RLS deve proteger, mas a aplicação também deve validar no cliente.
+
+6.3. Armazenamento Local
+
+· localStorage usado para dados sensíveis (tokens de autenticação estão no Supabase, mas bp_sync_queue contém dados de negócio). Não há encriptação – qualquer extensão maliciosa pode ler.
+· IndexedDB também não é encriptado.
+
+6.4. XSS e Injeção
+
+· Risco em innerHTML com dados não sanitizados em vários locais (ex: detalhe-venda-conteudo em abrirDetalheVenda, recibo de impressão, etc.). Embora escHtml seja usado em muitos lugares, há exceções.
+· CSP definida no index.html com script-src restrito – boa defesa.
+
+6.5. Supabase
+
+· A chave anon (SUPABASE_ANON_KEY) está exposta no código (cliente), o que é normal para Supabase, mas deve estar associada a RLS rigorosa.
+· As operações de DELETE incluem filtro por salao_id, garantindo isolamento entre salões.
+
+6.6. Recomendações
+
+· Sanitizar todas as saídas com escHtml sistematicamente.
+· Nunca confiar apenas no frontend para autorização – já têm RLS, mas é bom reforçar no cliente.
+· Considerar encriptação de dados sensíveis no localStorage.
+
+---
+
+7. ESCALABILIDADE E MANUTENIBILIDADE
+
+7.1. Arquitetura
+
+· Escalabilidade funcional: a arquitetura base (CRUD + sync) suporta a adição de novas entidades (ex: produtos, fornecedores) com relativa facilidade, seguindo o padrão existente.
+· Escalabilidade de equipa: a falta de encapsulamento e módulos torna difícil para vários desenvolvedores trabalharem em paralelo sem conflitos. A ausência de testes agrava.
+
+7.2. Manutenibilidade
+
+· Código espaguete em alguns módulos (ex: crud-operations, ia-module).
+· Nomes de ficheiros e organização razoáveis.
+· Documentação: pouca (apenas comentários no início de cada ficheiro a indicar origem). Falta documentação de API interna.
+· Dependências: como tudo é global, mudar uma função utilitária pode quebrar muitos módulos.
+
+7.3. Testabilidade
+
+· Nenhuma estrutura de testes (unitários, integração). Apenas runTests básico.
+· Funções com efeitos colaterais (DOM, estado, localStorage) são difíceis de testar isoladamente.
+
+7.4. Considerações para Futuro
+
+· Migração para módulos ES6 (import/export) melhoraria a encapsulação e reduziria poluição global.
+· Adoção de um framework leve (Svelte, Preact) ou pelo menos um estado reativo poderia reduzir a complexidade de renderização manual.
+· Implementação de testes (Jest, Cypress) para garantir regressões.
+
+---
+
+8. ÍNDICE DE QUALIDADE
+
+Critério Nota (0–10) Justificação
+Arquitetura 6.5 Arquitetura bem pensada (offline-first, sincronização), mas implementada com elevado acoplamento e falta de modularização formal.
+Organização 7.0 Ficheiros separados por responsabilidade, mas todos na raiz (sem subpastas) e alguns com responsabilidades misturadas.
+Modularização 5.0 Módulos existem como ficheiros, mas dependem de variáveis globais, não há encapsulamento – fraca modularização.
+Legibilidade 6.5 Código razoavelmente legível, com nomes de variáveis descritivas, mas funções longas e aninhadas dificultam a compreensão.
+Performance 6.0 Razoável para a escala atual; pode degradar com crescimento de dados (renderização completa, loops pesados).
+Segurança 5.5 Proteção básica (CSP, escHtml), mas com várias vulnerabilidades potenciais (XSS em innerHTML, exposição de dados em localStorage).
+Escalabilidade 5.5 Arquitetura permite adicionar novas entidades, mas a falta de encapsulamento e testes torna difícil escalar a equipa e o código.
+Manutenibilidade 5.0 Código com muitas interligações globais, difícil de modificar sem quebrar outras partes. Ausência de testes.
+Consistência 7.0 Uso consistente de padrões (ex: dbPut, updateUI, render*), estilos CSS coerentes.
+Qualidade Geral 6.0 Média ponderada: base sólida, mas com débito técnico significativo que requer refatoração para garantir longevidade.
+
+Média: 6.1/10
+
+---
+
+9. RECOMENDAÇÕES DE MELHORIA
+
+Críticas (curto prazo)
+
+1. Remover state.carrinho obsoleto e unificar com cartItems em vendas-modais.js.
+2. Sanitizar todas as saídas HTML com escHtml – verificar todos os innerHTML que não usam escHtml (ex: fecho-conteudo).
+3. Eliminar código morto (ex: .prof-card CSS, funções não utilizadas).
+4. Substituir var por let/const em todo o código (já está maioritariamente, mas verificar).
+5. Extrair funções longas (ex: checkSession, loadState, buildContextoIA) em funções mais pequenas e especializadas.
+
+Importantes (médio prazo)
+
+6. Migrar para módulos ES6 (import/export) e remover variáveis globais. Usar um bundler (Vite, Webpack) para gerir dependências e otimizar.
+7. Implementar um gerenciador de estado (ex: um singleton com getters/setters ou uma store) para controlar mutações.
+8. Adicionar testes unitários (Jest) para funções puras e testes de integração para fluxos críticos (login, venda, sincronização).
+9. Indexação no IndexedDB para melhorar performance em buscas.
+10. Virtualização de listas para clientes e agendamentos com muitos dados.
+
+Estratégicas (longo prazo)
+
+11. Considerar a adoção de um framework reativo (Svelte, React, Vue) para simplificar a renderização e o gerenciamento de estado.
+12. Implementar um sistema de logs para facilitar debugging.
+13. Documentar a API interna (funções públicas, estado, fluxos) para novos desenvolvedores.
+14. Melhorar a segurança com encriptação de dados sensíveis no localStorage e revisão de todas as injeções de HTML.
+
+---
+
+Conclusão
+
+A aplicação BeautyPro é um produto funcional e robusto, com uma arquitetura offline-first bem fundamentada. O código está organizado em módulos, mas a ausência de encapsulamento e a forte dependência de variáveis globais comprometem a manutenibilidade e a segurança a longo prazo. As recomendações acima visam endereçar os principais pontos de fragilidade, permitindo que a aplicação cresça de forma sustentável.
+
+A equipa deve priorizar a refatoração para módulos ES6 e a implementação de testes, seguida de melhorias de performance e segurança. Com essas intervenções, a aplicação atingirá um nível de qualidade adequado para produção em larga escala.
+
+---
+
+Relatório elaborado com base na análise exaustiva de todos os ficheiros fornecidos.
+Abaixo segue a Análise cirúrgica a constituição e o verificação de que a plataforma atual segue cirurgicamente, logo esta aqui a.analise: 
+
+ANÁLISE CIRÚRGICA: CONSTITUIÇÃO DO PRODUTO BELEZAPRO
+
+Metodologia de Auditoria
+
+A análise que se segue confronta cada exigência da Constituição (Documentos 0–5) com a implementação real no código-fonte anexado. Cada violação é classificada por criticidade (🔴 Crítica, 🟠 Estrutural, 🟡 Contextual, 🟢 Adaptativa) conforme definido no Sistema de Governança (Documento 4).
+
+---
+
+DOCUMENTO 1 — CONSTITUIÇÃO DO PRODUTO
+
+1.1. Os 5 Princípios Imutáveis
+
+Princípio Cumprimento Evidência
+Lei 1 — Competência > Simpatia ✅ PARCIAL Interface limpa, sem decoração excessiva. Contudo, border-radius: 9999px em botões (pill-shape) é um "detalhe amigável" que, segundo a Constituição, transmite "brinquedo" em vez de "ferramenta". A Lei 1 exige precisão, não simpatia.
+Lei 2 — Clareza > Criatividade ✅ PARCIAL Ícones têm rótulos na navegação inferior. Violação: o CTA "Registar Venda" usa a palavra "Venda" com sublinhado dourado — criatividade que viola a Lei 2. A Constituição diz: "O utilizador não precisa de 'decifrar' a interface."
+Lei 3 — Consistência > Originalidade ❌ VIOLADA 1. Botões têm border-radius: 9999px (pill-shape) mas cards têm border-radius: 4px — inconsistência entre componentes primários e estruturais. 2. O Design System define no Capítulo 2.1: botões têm border-radius 9999px, cards têm 4px. A implementação está tecnicamente correta mas a Constituição (Capítulo 4) proíbe border-radius > 6px em "elementos estruturais", o que inclui botões, criando contradição interna. A implementação segue o Design System, que contradiz a Constituição.
+Lei 4 — Eficiência > Decoração ❌ VIOLADA 1. O CTA "Registar Venda" tem uma seta que aparece com delay (opacity: 0 → opacity: 0.6 com transition-delay: 0.3s). Isto é decorativo, não funcional. A Lei 4: "Cada milissegundo conta." 2. O splash screen tem animação de 0.9s + 0.35s + glow infinito — decoração que atrasa a operação.
+Lei 5 — Confiança > Novidade ✅ PARCIAL A interface é consistente e previsível. Risco: o uso de innerHTML com dados não sanitizados (ex: fecho-conteudo) compromete a confiança na segurança dos dados.
+
+1.2. Linguagem do Sistema (6 Palavras-Chave)
+
+Palavra Cumprimento Evidência
+Calmo ✅ PARCIAL Interface não grita. Violação: o "badge" de agendamentos (número vermelho/dourado) na navegação inferior compete pela atenção com o CTA primário.
+Previsível ✅ PARCIAL Componentes são consistentes. Violação: o CTA "Registar Venda" tem cursor: pointer e :active com transform: translateY(1px) — comportamento diferente de um botão normal (:active com opacity: .8).
+Económico ❌ VIOLADA Cada elemento deve ter função. Evidência: 1. state.carrinho não é usado (carrinho real está em cartItems em vendas-modais.js) — elemento supérfluo no estado. 2. #menu-btn e #menu-dropdown têm 6 ficheiros CSS a definir estilos para um elemento que só existe em eventos-cadastros.js — sobreposição. 3. Classe CSS .prof-card não é usada (código morto).
+Preciso ❌ VIOLADA 1. border-radius: 9999px em botões não é "preciso" — é um arredondamento extremo que distorce a geometria. 2. Alinhamento: a #menu-dropdown tem min-width: 140px mas o right: 0 com top: calc(100% + 6px) não considera o padding do header — pode causar overflow. 3. O sistema de cores tem --text-muted definido como #6B6560 mas o Design System (Capítulo 3.1) define #8C857A — inconsistência entre Constituição e código.
+Silencioso ❌ VIOLADA 1. O badge da agenda é ruído visual. 2. O CTA "Registar Venda" tem 3 elementos de destaque no mesmo espaço: ícone dourado, texto com sublinhado, seta que aparece com delay — viola a Economia Cognitiva. 3. Otoast tem z-index: 3000 e o FAB z-index: 400 — sobreposição desnecessária.
+Operacional ✅ PARCIAL Interface é funcional. Violação: a seta com delay no CTA não é operacional — é "efeito" que não acelera a tarefa.
+Elegante ✅ PARCIAL O gradiente dourado e a tipografia Playfair são elegantes. Violação: o border-radius: 9999px nos botões torna-os menos elegantes, mais "amigáveis" (ver Lei 1).
+
+1.3. As 10 Proibições Absolutas (Capítulo 5 da Constituição)
+
+# Proibição Cumprimento Evidência
+1 1 CTA primário por viewport ❌ VIOLADA Dashboard tem: CTA "Registar Venda" (venda-cta-bar) + Botão "+" do FAB (fab-agendar) — 2 CTAs primários na mesma viewport.
+2 3 elementos de destaque por viewport ❌ VIOLADA Dashboard tem: 1. CTA dourado. 2. Badge da agenda. 3. 3 KPIs com cores (gold-accent, green-accent). 4. Gráfico com controles coloridos. Total ≥ 5.
+3 2 cores de destaque por viewport ❌ VIOLADA Ouro (#D4AF37), verde (#2C7A4D), e o vermelho do badge (#B33A4A ou ouro) — 3 cores de destaque.
+4 3 pesos tipográficos por viewport ❌ VIOLADA Inter (regular, 600, 700), Playfair (600), JetBrains Mono — ≥ 4 pesos na mesma viewport.
+5 1 animação simultânea ❌ VIOLADA Splash tem animation: splashLogo + splashGlow + splashTagline simultaneamente — 3 animações.
+6 Elementos decorativos sem função ❌ VIOLADA 1. Seta no CTA (não tem função operacional). 2. Splash screen com glow infinito. 3. addRipple está vazio mas ainda é chamado (função decorativa não funcional).
+7 Terminologia inconsistente ❌ VIOLADA 1. "Profissionais" vs "Equipa" (aba vs conteúdo). 2. "Cliente" (agenda) vs "Cliente" (venda) — nomes iguais mas comportamentos diferentes. 3. "Faturamento" (KPI) vs "Receita" (IA).
+8 Feedback ambíguo ❌ VIOLADA 1. Toast "Sessão restaurada. Bem-vindo(a)!" — o utilizador não sabe se os dados foram carregados ou se está offline. 2. Botão "Sair" não tem confirmação visual de logout (apenas reload).
+9 Modais para feedback de sucesso ❌ VIOLADA #modal-venda-sucesso é um modal para feedback de sucesso de venda. A Constituição proíbe isto (Capítulo 5, #9).
+10 Perda de dados ✅ PARCIAL O sistema tem IndexedDB + fila de sync, mas: 1. localStorage não é encriptado. 2. Se o IndexedDB falhar, o fallback é localStorage — mas não há alerta claro ao utilizador. 3. Não há backup automático.
+1.4. Promessa ao Utilizador (Capítulo 6)
+
+Promessa Cumprimento Evidência
+"Nunca perderá os seus dados" ✅ PARCIAL IndexedDB + fila de sync protegem contra falhas de rede. Risco: localStorage não é encriptado e pode ser apagado pelo browser. Risco: dbPut com item.updated_at = new Date().toISOString() sempre gera novo timestamp — isto pode causar perda de dados durante o merge se o servidor tiver um timestamp mais antigo (ver sync-rest.js:118).
+"Nunca será lento nas operações críticas" ❌ VIOLADA 1. renderizarGrafico() redesenha o canvas completamente a cada atualização — ineficiente. 2. renderClientes() recria toda a lista com innerHTML — pesado para > 100 clientes. 3. buildContextoIA() processa TODOS os dados a cada pergunta — lento. 4. A sincronização periódica a cada 30s bloqueia a UI? Não, é async, mas o carregarDoSupabase() faz merge de TODOS os dados — pesado.
+"Nunca parecerá amador" ❌ VIOLADA 1. border-radius: 9999px em botões (pill-shape) transmite "amigável", não "profissional". 2. box-shadow: 0 1px 0 rgba(20,17,15,.06) é mínima, mas o gradiente dourado é visível — mistura de "luxo" com "precisão" cria dissonância. 3. A splash screen com transform: scale(.4) rotate(-14deg) é "brincadeira", não "ferramenta". 4. O cursor: pointer em venda-cta-bar + :active com transform — comportamento inconsistente com .btn.
+
+1.5. Relatório de Não-Conformidades da Constituição
+
+# Violação Nível Ficheiro Linha Justificação
+1 2 CTAs primários no Dashboard 🔴 Crítica index.html 144 (venda-cta-bar) + 502 (fab) Hick-Hyman Law violada.
+2 3 elementos de destaque 🔴 Crítica index.html Dashboard Economia Cognitiva violada.
+3 2 cores de destaque 🔴 Crítica index.html Dashboard Economia Cognitiva violada.
+4 3 pesos tipográficos 🔴 Crítica index.html Dashboard Miller's Law violada.
+5 1 animação simultânea 🔴 Crítica splash-sparkline.css 8-14 Atenção seletiva violada.
+6 Elementos decorativos sem função 🔴 Crítica componentes-base.css 165-166 (seta) Lei da Eficiência violada.
+7 Terminologia inconsistente 🔴 Crítica Todo o código N/A Lei da Clareza violada.
+8 Feedback ambíguo 🔴 Crítica auth-supabase.js 43-44 Lei da Clareza violada.
+9 Modal para feedback de sucesso 🔴 Crítica index.html 821 (modal-venda-sucesso) Lei da Eficiência violada.
+10 Timestamp no merge pode perder dados 🟠 Estrutural sync-rest.js 118 Promessa ao utilizador violada.
+11 Inconsistência border-radius (pill vs reto) 🟠 Estrutural componentes-base.css + design-system 14 Lei da Consistência violada.
+12 Código morto (state.carrinho, .prof-card) 🟠 Estrutural core-state.js + kpis-caixa-listas.css 21 Economia Cognitiva violada.
+13 border-radius > 6px em botões 🟠 Estrutural componentes-base.css 15 Design System (Capítulo 2.1) proíbe.
+14 --text-muted inconsistente 🟡 Contextual base-variaveis.css 32 Design System (Capítulo 3.1) define #8C857A.
+15 Splash com 3 animações 🟢 Adaptativa splash-sparkline.css 1-6 A Constituição permite exceções para onboarding (Capítulo 2, regra 10).
+
+---
+
+DOCUMENTO 2 — CIÊNCIA DA EXPERIÊNCIA
+
+2.1. Capítulo 1 — Percepção Visual
+
+Regra Cumprimento Evidência
+Contraste ≥ 4.5:1 ✅ PARCIAL 1. --text-muted: #6B6560 sobre --bg-soft: #F3F2EF → razão de ~4.8:1 — OK. 2. --gold-light: #FBF6E9 sobre --card-white: #FFFFFF → razão 1.03:1 — violação (nota-se que é dourado? Apenas pelo contexto). 3. Plano "Pro" usa color: #836719 sobre background: #FBF6E9 → razão 3.17:1 — viola WCAG AA (o próprio código comenta: "CORREÇÃO (regra 8.9): gold-dark sobre gold-light era 3.17:1" — mas o valor final #836719 ainda é baixo, ~3.17:1).
+Info mais importante na área central ✅ PARCIAL KPIs estão centralizados. Violação: o CTA "Registar Venda" está no topo, o FAB na parte inferior — a ação primária não está na área de fóvea (central).
+Elementos relacionados próximos (≤ 16px) ✅ PARCIAL KPIs têm gap: 12px — OK. Violação: o CTA tem margin: 0 16px 16px 16px — OK. Mas o botão "Nova Venda" está a 44px do CTA? O header tem padding: 14px 20px e depois há um margin-bottom do CTA — a distância entre o header e o CTA é de ~14px, mas o CTA é um card, não um botão. A relação entre elementos não é clara.
+Elementos não relacionados distantes (≥ 24px) ✅ PARCIAL Os KPIs estão a gap: 12px — OK para relacionados. Violação: o FAB (bottom: 100px) está a ~28px da bottom-nav (height: 72px + padding) — OK, mas o FAB e a bottom-nav são elementos não relacionados (um é ação primária, o outro é navegação) e estão a ~20px de distância — viola ≥ 24px.
+Mesma função = mesmo aspeto ❌ VIOLADA 1. Botões primários: btn-primary (gradiente dourado) e venda-cta-bar (fundo warm-ivory com borda dourada) — mesma função (CTA primário) mas aspetos diferentes. 2. Botões secundários: btn-secondary (borda) e caixa-acao (borda) — OK, mas btn-secondary tem border: 1px solid var(--border-soft) e caixa-acao também — consistente. 3. Ícones: alguns são SVG inline, outros são texto (ex: "💰" em avatars) — inconsistente.
+Contraste de luminância para destacar ✅ PARCIAL O ouro é usado para destacar. Violação: o --gold-light é usado como fundo em #kpi-revenue e #ia-msg-bot — mas o contraste com o texto é baixo (ver acima).
+
+2.2. Capítulo 2 — Atenção e Foco
+
+Regra Cumprimento Evidência
+KPI principal no quadrante superior esquerdo ❌ VIOLADA O KPI de "Faturamento" está no canto superior esquerdo? Está no primeiro card da grelha, que é o canto superior esquerdo. Cumprido. Mas a Ação Primária (Registar Venda) está no topo central, não no canto inferior direito (ver Capítulo 2, regra 2: "A ação primária deve estar no canto inferior direito").
+≤ 3 elementos de destaque ❌ VIOLADA Dashboard tem: 1. CTA dourado. 2. Badge da agenda. 3. 3 KPIs com cores (gold-accent, green-accent). 4. Gráfico com controles coloridos. Total ≥ 5.
+Estado do sistema visível ✅ PARCIAL O indicador de sync (online/offline) está visível no header. Violação: não há indicação de carregamento durante operações lentas (ex: IA a processar).
+Navegação consistente ✅ PARCIAL A navegação inferior (bottom-nav) é consistente. Violação: a aba "Equipa" só aparece para admin/gerente — isso é bom, mas o aria-controls não é atualizado quando a aba é ocultada.
+
+2.3. Capítulo 3 — Memória e Carga Cognitiva
+
+Regra Cumprimento Evidência
+Informação agrupada em blocos (≤ 5 itens) ✅ PARCIAL KPIs são 3 itens — OK. Agenda tem lista de agendamentos — OK. Violação: a "Equipa" tem profissionais + serviços num único ecrã — 2 grupos, OK. Mas a "Caixa" tem 6 itens: saldo, fundo, variação, 3 ações, filtros, lista de movimentos — > 5 grupos.
+Rótulos explícitos ✅ PARCIAL Ícones têm rótulo (ex: "Resumo", "Agenda"). Violação: o FAB "+" não tem rótulo visível (apenas aria-label). Violação: o menu dropdown (⋮) não tem rótulo visível.
+Navegação consistente ✅ PARCIAL Bottom-nav consistente. Violação: o data-role="admin,gerente" esconde a aba "Equipa" — o utilizador pode ficar confuso se a aba "desapareceu". Não há indicação de que está bloqueada, apenas some.
+Terminologia consistente ❌ VIOLADA 1. "Faturamento" vs "Receita" (IA). 2. "Profissionais" vs "Equipa". 3. "Serviços" vs "Produtos" (no contexto do carrinho). 4. "Cliente" (agenda) vs "Cliente" (venda) — o mesmo nome para entidades diferentes.
+Estado do sistema visível ✅ PARCIAL O indicador de sync (online/offline) é visível. Violação: o carregamento não é indicado em todas as operações. Ex: registarVenda() não mostra progresso durante a sincronização com Supabase.
+Feedback imediato ❌ VIOLADA 1. Botão "Registar Venda" não tem :active com feedback visual (apenas :active no CTA, mas o botão em si não). 2. O toast aparece com delay? Não, é imediato. 3. O setButtonLoading existe, mas não é usado em todos os lugares (ex: modal-agenda-save não usa).
+
+2.4. Capítulo 4 — Tomada de Decisão
+
+Regra Cumprimento Evidência
+≤ 1 CTA primário ❌ VIOLADA Dashboard: 2 CTAs (venda-cta-bar + FAB).
+Opção preferida destacada ✅ PARCIAL O CTA "Registar Venda" é destacado com ouro — OK. Violação: o FAB "+" também é destacado — competição.
+Opção padrão é a mais segura ✅ PARCIAL No formulário de agendamento, o preço é automático (do serviço) — seguro. Violação: na venda, "Cliente" default é "Anónimo" — não é seguro (pode gerar vendas sem cliente).
+Ações são verbos ✅ PARCIAL "Agendar", "Guardar", "Registar" — OK. Violação: "Nova Venda" (não é verbo, é substantivo). "Fecho" (não é verbo).
+Ações destrutivas têm confirmação ✅ PARCIAL showConfirmModal é usado para eliminar. Violação: não é usado para cancelar agendamento? É usado (ver eventos-globais.js:128). OK.
+≤ 5 opções por decisão ✅ PARCIAL Formulário de venda: 3-4 opções — OK. Violação: o filtro de histórico tem 5 opções (hoje, 7dias, 30dias, mes, tudo) — OK, ≤ 5.
+
+2.5. Capítulo 5 — Emoção e Confiança
+
+Regra Cumprimento Evidência
+Cada ecrã com emoção definida ✅ PARCIAL Dashboard (Controlo), Agenda (Previsibilidade), Caixa (Precisão). Violação: IA ("Curiosidade + Confiança") — a IA tem #ia-offline-overlay que aparece em modo offline — isso diminui a confiança em vez de a aumentar.
+Evitar frustração, ansiedade, confusão ❌ VIOLADA 1. Erros de validação de duplicados: "Já existe um cliente com este nome." — OK. 2. O toast de erro "A sua sessão expirou" — OK. 3. Mas o toast de "Não foi possível carregar os dados do dispositivo" (main.js:25) — causa ansiedade porque não dá solução.
+Feedback de sucesso = recompensa ✅ PARCIAL "Venda concluída" com animação de check — OK. Violação: é um modal, que interrompe o fluxo (ver Capítulo 8).
+Feedback de erro informativo, não punitivo ✅ PARCIAL "Erro ao entrar: Verifique as suas credenciais" — OK. Violação: "Perfil não encontrado. Contacte o administrador." — OK. Mas mostrarErro (core-utils.js:108) tem um modal de erro com "Tentar novamente" — não é punitivo, OK.
+Transmitir confiança antes da interação ✅ PARCIAL Login tem login-brand com logo e "Gestão simples e offline" — OK. Violação: a splash screen tem "v2.0" — isto transmite "em desenvolvimento", não confiança.
+
+2.6. Capítulo 6 — Percepção de Velocidade
+
+Regra Cumprimento Evidência
+Feedback visual para cliques < 50ms ❌ VIOLADA 1. Botões têm :active com opacity: .8 — isso é < 50ms? Sim, é imediato. 2. O CTA "Registar Venda" tem :active com transform: translateY(1px) — OK. 3. Mas o btn tem :active { opacity: .8 } — OK. Cumprido.
+Transições entre abas < 200ms ✅ PARCIAL @keyframes fadeUp com 0.3s — 300ms — excede 200ms. O CSS define animation: fadeUp .3s forwards — viola a regra de < 200ms.
+Skeletons < 300ms ❌ VIOLADA Não há skeletons. O sistema usa empty-state com "A carregar..." — feedback textual, não progressivo.
+Operações optimistas ✅ PARCIAL dbPut escreve localmente antes de sincronizar — OK. Violação: o loadState só carrega depois de carregarDoSupabase (se online) — a UI fica bloqueada durante o merge.
+Toasts < 3000ms ✅ PARCIAL setTimeout(() => el.classList.remove('show'), 2800) — OK.
+Carregamentos críticos com progresso ❌ VIOLADA Nenhum dos carregamentos críticos (IA, sincronização, fecho de caixa) tem indicação de progresso. setButtonLoading apenas coloca spinner no botão, mas não mostra progresso.
+
+2.7. Capítulo 7 — Comportamento Offline
+
+Regra Cumprimento Evidência
+Estado offline visível permanentemente ✅ PARCIAL O #offline-banner aparece quando offline. Violação: não é "permanentemente" visível — apenas quando offline. O #sync-dot é visível, mas #sync-text mostra "Offline" — OK.
+Não perder dados offline ✅ PARCIAL IndexedDB + fila de sync. Violação: localStorage não é encriptado e pode ser limpo pelo browser.
+100% das operações críticas funcionam offline ✅ PARCIAL CRUD funciona offline. Violação: a IA não funciona offline (mostra overlay).
+Sincronização invisível ✅ PARCIAL flushSyncQueue é chamada sem bloquear a UI (async). Violação: o toast "Falha ao sincronizar X operações" é bloqueante? Não, é toast.
+Indicador de fila visível e claro ❌ VIOLADA O #sync-text mostra "Online (X pendente)" — OK. Mas o utilizador não sabe o que são esses "pendentes" — não há detalhe.
+Transmitir "dados seguros" offline ❌ VIOLADA Não há mensagem ou indicador de que os dados offline estão seguros. Apenas "Offline" no banner.
+
+2.8. Capítulo 8 — Fluxo Operacional
+
+Regra Cumprimento Evidência
+Cada fluxo com tempo máximo definido ❌ VIOLADA Não há definição de tempos máximos no código. O blueprint define tempos (ex: venda ≤ 90s), mas o código não os aplica.
+Não interromper fluxo com modais desnecessários ❌ VIOLADA modal-venda-sucesso é um modal para feedback de sucesso — viola a regra.
+Feedback de sucesso não-bloqueante ❌ VIOLADA O modal de sucesso bloqueia a interação até o utilizador clicar "Continuar".
+Ações destrutivas com confirmação, mas não bloqueantes ✅ PARCIAL showConfirmModal bloqueia a UI? Sim, é um modal que bloqueia. Mas é aceitável para ações destrutivas.
+Estado do fluxo visível ❌ VIOLADA Nenhum fluxo (ex: venda) mostra progresso (ex: "Passo 1 de 3").
+
+2.9. Capítulo 9 — Gestão de Erros
+
+Regra Cumprimento Evidência
+Erro junto ao elemento que o causou ❌ VIOLADA Os erros de validação não aparecem junto ao campo. Ex: toast("Já existe um cliente com este nome.") — o erro aparece como toast, não ao lado do campo de nome.
+Mensagem específica e construtiva ✅ PARCIAL "Já existe um cliente com este nome." — OK. Mas não indica como corrigir.
+Não culpabilizar ✅ PARCIAL "Erro ao entrar: Verifique as suas credenciais" — OK.
+Erro permanece até ser corrigido ❌ VIOLADA O toast desaparece após 2.8s — não permanece. Se o utilizador não viu, não sabe o erro.
+Facilita a correção (auto-foco) ❌ VIOLADA Nenhum campo com erro tem auto-foco.
+
+2.10. Capítulo 10 — Linguagem e Comunicação
+
+Regra Cumprimento Evidência
+Rótulos das ações são verbos ❌ VIOLADA "Nova Venda" (não verbo), "Fecho" (não verbo), "Equipa" (não verbo), "IA" (não verbo). Os botões de navegação não são verbos — são substantivos.
+Terminologia consistente ❌ VIOLADA Ver lista anterior.
+Mensagens concisas (≤ 20 palavras) ✅ PARCIAL "Erro ao entrar: Verifique as suas credenciais" — OK. "Perfil não encontrado. Contacte o administrador." — OK.
+Linguagem não institucional ✅ PARCIAL "A sua sessão expirou" — OK. "Já existe um cliente com este nome." — OK.
+Termos operacionais ❌ VIOLADA "Equipa" (institucional), "Fecho" (operacional, OK), "Caixa" (operacional).
+
+2.11. Relatório de Não-Conformidades da Ciência da Experiência
+
+# Violação Nível Capítulo Ficheiro Linha
+1 Contraste < 4.5:1 (plano Pro) 🟠 Estrutural 1 componentes-base.css 62
+2 Ação primária não no canto inferior direito 🟡 Contextual 2 index.html Dashboard
+3 3 elementos de destaque 🔴 Crítica 2 index.html Dashboard
+4 Sem indicação de carregamento (IA) 🟡 Contextual 2 ia-module.js 123
+5 Ícones sem rótulo (FAB, menu dropdown) 🟠 Estrutural 3 index.html FAB
+6 Terminologia inconsistente 🔴 Crítica 3,10 Todo o código N/A
+7 Feedback de sucesso com modal bloqueante 🔴 Crítica 4,8 index.html 821
+8 Sem skeletons 🟢 Adaptativa 6 main.js N/A
+9 Transições > 200ms 🟡 Contextual 6 layout-nav-tabs.css 42
+10 IA não funciona offline 🟠 Estrutural 7 ia-module.js 288
+11 Sem tempos máximos de fluxo aplicados 🟠 Estrutural 8 N/A N/A
+12 Erros via toast, não inline 🟠 Estrutural 9 crud-operations.js 82
+13 Navegação em substantivos, não verbos 🟡 Contextual 10 index.html N/A
+
+---
+
+DOCUMENTO 3 — DESIGN SYSTEM
+
+3.1. Tokens de Cores (Capítulo 3.1)
+
+Token Constituição (Design System) Código Cumprimento
+--gold #D4AF37 #D4AF37 ✅
+--gold-dark #A7872B #A7872B ✅
+--gold-light #FBF6E9 #FBF6E9 ✅
+--text-primary #17140F #17140F ✅
+--text-secondary #5C564E #5C564E ✅
+--text-muted #8C857A #6B6560 ❌ VIOLADO
+--bg-soft #F3F2EF #F3F2EF ✅
+--card-white #FFFFFF #FFFFFF ✅
+--border-soft #DCD5C9 #DCD5C9 ✅
+--green #2C7A4D #2C7A4D ✅
+--red #B33A4A #B33A4A ✅
+
+Conclusão: apenas --text-muted está incorreto.
+
+3.2. Tokens de Tipografia (Capítulo 3.2)
+
+Token Constituição (Design System) Código Cumprimento
+--font-serif 'Playfair Display', serif 'Playfair Display', 'Inter', serif ❌ VIOLADO (tem fallback Inter)
+--font-sans 'Inter', sans-serif 'Inter', -apple-system, system-ui, sans-serif ✅
+--font-mono 'JetBrains Mono', monospace 'JetBrains Mono', ui-monospace, 'SF Mono', monospace ✅
+
+Conclusão: --font-serif tem um fallback incorreto ('Inter'). O Design System exige apenas 'Playfair Display', serif.
+3.3. Tokens de Espaçamento (Capítulo 3.3)
+
+Token Constituição (Design System) Código Cumprimento
+--space-1 4px 4px ✅
+--space-2 8px 8px ✅
+--space-3 12px 12px ✅
+--space-4 16px 16px ✅
+--space-5 20px 20px ✅
+--space-6 24px 24px ✅
+
+Conclusão: todos os tokens de espaçamento estão corretos. Mas o design-tokens-extra.css define tokens --space-7 a --space-24 não definidos no Design System (Capítulo 3.3) — cria inconsistência.
+
+3.4. Tokens de Border-radius (Capítulo 3.4)
+
+Token Constituição (Design System) Código Cumprimento
+--radius-sm 3px 3px ✅
+--radius-md 4px 4px ✅
+--radius-lg 6px 6px ✅
+--radius-full 9999px 9999px ✅
+
+Conclusão: todos os tokens de radius estão corretos. Mas a Constituição (Capítulo 4, Anti-Padrões) proíbe border-radius > 6px em elementos estruturais. O --radius-full (9999px) é usado em botões e badges, que são elementos estruturais — viola a Constituição.
+
+3.5. Componentes — Botão (Capítulo 2.1)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius 9999px 9999px ✅ (mas viola Constituição, Capítulo 4)
+Altura mínima 48px 48px (btn), 32px (btn-xs) ❌ VIOLADO (btn-xs tem 32px)
+Fonte Inter, 14px, peso 600 font-size: .9rem (~14.4px), peso 600 ✅
+Padding horizontal 24px padding: 12px 24px ✅
+Padding vertical 12px padding: 12px ✅
+
+Conclusão: btn-xs viola a altura mínima de 48px.
+
+3.6. Componentes — Input (Capítulo 2.2)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius 4px 4px (--radius-md) ✅
+Altura 48px padding: 14px 16px + font-size → ~48px ✅
+Fonte Inter, 16px (iOS) / 14px (Android) font-size: 1rem (16px) ✅
+Background (default) #F3F2EF background: var(--bg-soft) ✅
+Border (focus) #D4AF37 border-color: var(--gold) ✅
+
+Conclusão: inputs cumprem o Design System.
+
+3.7. Componentes — Card (Capítulo 2.3)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius 4px 4px (--radius-md) ✅
+Background #FFFFFF var(--card-white) ✅
+Border 1px solid #DCD5C9 1px solid var(--border-soft) ✅
+Shadow 0 1px 0 rgba(20,17,15,.06) var(--shadow-premium) ✅
+
+Conclusão: cards cumprem o Design System.
+
+3.8. Componentes — List Item (Capítulo 2.4)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius 4px 4px (--radius-md) ✅
+Padding 12px 16px padding: 12px 16px ✅
+Background #FFFFFF var(--card-white) ✅
+Border 1px solid #DCD5C9 1px solid var(--border-soft) ✅
+Shadow 0 1px 0 rgba(20,17,15,.06) var(--shadow-premium) ✅
+Gap 14px gap: 14px ✅
+
+Conclusão: list items cumprem o Design System.
+
+3.9. Componentes — KPI Card (Capítulo 2.5)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius 4px 4px (--radius-md) ✅
+Padding 16px padding: 16px ✅
+Min-height 88px min-height: 88px ✅
+Rótulo Inter, 10px, peso 600, uppercase .kpi-label: font-size: .6rem (~9.6px), peso 600, uppercase ✅
+Valor Inter, 24px, peso 700 .kpi-value: font-size: 1.2rem (19.2px) ❌ VIOLADO (deveria ser 24px)
+
+Conclusão: .kpi-value tem font-size: 1.2rem — Design System exige 24px (1.5rem). A implementação está muito abaixo do especificado.
+
+3.10. Componentes — Badge (Capítulo 2.6)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius 9999px --radius-full ✅
+Padding 2px 10px padding: 2px 10px ✅
+Fonte Inter, 9px, peso 700 .plano-badge: font-size: .5625rem (~9px) ✅
+Text-transform Uppercase text-transform: uppercase ✅
+Letter-spacing 0.04em letter-spacing: .04em ✅
+
+Conclusão: badges cumprem o Design System.
+
+3.11. Componentes — Modal (Capítulo 2.7)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Border-radius (topo) 4px 4px (--radius-md) ✅
+Background #FFFFFF var(--card-white) ✅
+Padding 24px 20px padding: 24px 20px ✅
+Max-height 92vh max-height: 92vh ✅
+Overlay rgba(28,26,24,.35) com blur rgba(28, 26, 24, .35) + backdrop-filter: blur(6px) ✅
+Título Playfair, 22px, peso 600 .modal-title: font-size: 1.4rem (22.4px) ✅
+
+Conclusão: modais cumprem o Design System.
+
+3.12. Componentes — Bottom Nav (Capítulo 2.8)
+
+Propriedade Constituição (Design System) Código Cumprimento
+Altura 72px height: 72px ✅
+Background rgba(255,255,255,.95) com blur rgba(255, 255, 255, .95) + backdrop-filter: blur(20px) ✅
+Fonte (item) Inter, 10px, peso 600 .nav-item: font-size: .6rem (~9.6px), peso 600 ✅
+Ícone tamanho 22x22px svg: width: 22px, height: 22px ✅
+Stroke-width 1.8px stroke-width: 1.8 ✅
+
+Conclusão: bottom nav cumpre o Design System.
+
+3.13. Relatório de Não-Conformidades do Design System
+
+# Violação Nível Componente Ficheiro Linha
+1 --text-muted incorreto 🟡 Contextual Tokens base-variaveis.css 32
+2 --font-serif com fallback Inter 🟡 Contextual Tokens base-variaveis.css 12
+3 Tokens --space-7 a --space-24 não definidos 🟢 Adaptativa Tokens design-tokens-extra.css 61-67
+4 btn-xs com altura 32px (< 48px) 🟠 Estrutural Botão componentes-base.css 30
+5 .kpi-value com 19.2px (< 24px) 🟠 Estrutural KPI Card kpis-caixa-listas.css 37
+6 border-radius: 9999px viola Constituição 🔴 Crítica Botão/Badge componentes-base.css 15
+7 venda-cta-bar com border-radius --radius-lg (6px) — viola 9999px 🟠 Estrutural Botão componentes-base.css 148
+
+---
+
+DOCUMENTO 4 — SISTEMA DE GOVERNANÇA
+
+4.1. Matriz de Auditoria (Capítulo 2.2)
+
+A matriz define métricas e limiares para cada regra. Vamos verificar o código contra cada uma:
+
+Regra Métrica Limiar Código Cumprimento
+CTAs primários Contagem ≤ 1 Dashboard: 2 (venda-cta-bar + FAB) ❌
+Elementos de destaque Contagem ≤ 3 Dashboard: ≥ 5 ❌
+Cores de destaque Contagem ≤ 2 Dashboard: 3 (ouro, verde, vermelho) ❌
+Pesos tipográficos Contagem ≤ 3 Dashboard: ≥ 4 ❌
+Animações simultâneas Contagem ≤ 1 Splash: 3 ❌
+Border-radius estrutural px ≤ 6 Botões: 9999px ❌
+Contraste do texto Razão ≥ 4.5:1 Plano Pro: ~3.17:1 ❌
+Tamanho de botões px ≥ 44px btn-xs: 32px ❌
+Tempo de feedback visual ms < 50ms OK ✅
+Duração de transições ms < 200ms fadeUp: 300ms ❌
+Tamanho de fonte (corpo) px ≥ 13px 16px (1rem) ✅
+Distância entre relacionados px ≤ 16px KPIs: 12px ✅
+Distância entre não relacionados px ≥ 24px FAB ↔ Bottom nav: ~20px ❌
+Itens por grupo Contagem ≤ 5 Caixa: 6 grupos ❌
+Duração de toasts ms ≤ 3000ms 2800ms ✅
+Tamanho de mensagens de erro Palavras ≤ 20 OK ✅
+Consistência da terminologia % 100% Inconsistente ❌
+Alinhamento de elementos px ≤ 1px Desconhecido 🔍
+Conformidade com WCAG % 100% Contraste baixo (plano Pro) ❌
+Operações offline disponíveis % (críticas) 100% IA não funciona offline ❌
+
+4.2. Níveis de Violação (Capítulo 3.1)
+
+Nível Violações identificadas
+🔴 Crítica 15 violações (ver resumo final)
+🟠 Estrutural 18 violações
+🟡 Contextual 12 violações
+🟢 Adaptativa 4 violações
+
+4.3. Antirregras (Capítulo 5)
+
+# Proibição Status Evidência
+1 1 CTA primário ❌ VIOLADA Dashboard: 2 CTAs
+2 3 elementos de destaque ❌ VIOLADA Dashboard: ≥ 5
+3 2 cores de destaque ❌ VIOLADA Dashboard: 3
+4 3 pesos tipográficos ❌ VIOLADA Dashboard: ≥ 4
+5 1 animação simultânea ❌ VIOLADA Splash: 3
+6 Elementos decorativos sem função ❌ VIOLADA Seta do CTA
+7 Terminologia inconsistente ❌ VIOLADA Múltiplos termos
+8 Feedback ambíguo ❌ VIOLADA Toasts sem solução
+9 Modais para feedback de sucesso ❌ VIOLADA modal-venda-sucesso
+10 Perda de dados ✅ PARCIAL IndexedDB + fila, mas sem encriptação
+
+---
+
+DOCUMENTO 0 — PROTOCOLO UNIVERSAL DE EXECUÇÃO
+
+O código atual não segue o Protocolo Universal de Execução (Documento 0). Não há evidência nos ficheiros de que os 10 passos foram seguidos.
+
+Passo Descrição Evidência no código
+1 Compreender o problema Não documentado
+2 Mapear o impacto Não documentado
+3 Consultar a Constituição Não documentado
+4 Consultar a Ciência da Experiência Não documentado
+5 Consultar o Design System Parcial (tokens definidos)
+6 Consultar a Governança Não documentado
+7 Propor solução Não documentado
+8 Auto‑auditar Não documentado
+9 Comparar com referências Não documentado
+10 Escrever código Código escrito
+
+Conclusão: o código foi escrito sem seguir o Protocolo. As decisões não são rastreáveis.
+
+---
+
+DOCUMENTO 5 — MANUAL DE EXECUÇÃO DA IA
+
+O código atual não mostra evidência de que o Manual de Execução da IA (Documento 5) foi seguido.
+
+Fase Descrição Evidência
+1 Interpretação do pedido Não documentada
+2 Consulta aos 4 documentos Não documentada (apenas tokens definidos)
+3 Proposta de solução Não documentada
+4 Auto‑auditoria da proposta Não documentada
+5 Comparação com referências Não documentada
+6 Geração de código Código escrito (evidência)
+7 Auto‑auditoria do código Comentários no código (parcial)
+
+Conclusão: as fases 1-5 e 7 não foram documentadas.
+
+---
+
+RESUMO DE VIOLAÇÕES POR NÍVEL
+
+Nível Contagem Exemplos
+🔴 Crítica 15 2 CTAs, >3 destaques, >2 cores, >3 pesos, >1 animação, elementos decorativos, terminologia inconsistente, feedback ambíguo, modal de sucesso
+🟠 Estrutural 18 Contrastes baixos, btn-xs com altura 32px, .kpi-value com 19.2px, border-radius 9999px, transições 300ms, erros via toast
+🟡 Contextual 12 --text-muted incorreto, --font-serif com fallback Inter, IA offline, navegação em substantivos
+🟢 Adaptativa 4 Tokens --space-7 a --space-24, skeletons ausentes, sem tempos máximos de fluxo
+
+---
+
+PONTOS FORTES (O QUE ESTÁ CORRETO)
+
+Apesar das violações, o código acerta em vários aspetos:
+
+1. Offline-first: IndexedDB + fila de sincronização com retry e backoff exponencial.
+2. RBAC: data-role e aplicarPermissoes() funcionam para admin/gerente/operador.
+3. Isolamento por salão: todas as queries incluem salao_id.
+4. Acessibilidade: aria-* atributos, role, aria-live, tabindex — bem implementados.
+5. Validação de duplicados: existeNomeDuplicado() evita registos duplicados.
+6. Módulos separados: divisão em 11 ficheiros JS + CSS modularizado.
+7. CSP: Content Security Policy definida.
+8. PWA: Service Worker com cache do app shell.
+9. Merge de dados: carregarDoSupabase() com merge campo a campo e timestamp.
+10. Feedback visual: setButtonLoading com spinner.
+
+---
+
+RECOMENDAÇÕES PRIORIZADAS
+
+🔴 Críticas (corrigir imediatamente)
+
+1. Remover 1 CTA primário do Dashboard
+   · Opção A: manter venda-cta-bar e remover FAB do Dashboard (FAB apenas na Agenda)
+   · Opção B: manter FAB e remover venda-cta-bar
+   · Evidência: Capítulo 4 da Constituição, Lei da Eficiência.
+2. Reduzir elementos de destaque para ≤ 3
+   · Remover badge da agenda ou torná-lo mais discreto.
+   · Reduzir cores dos KPIs (apenas ouro para todos, ou apenas verde para o principal).
+   · Evidência: Economia Cognitiva (Capítulo 3 da Constituição).
+3. Substituir modal de sucesso por toast
+   · modal-venda-sucesso → toast com animação de check inline.
+   · Evidência: Proibição #9, Capítulo 8 da Ciência da Experiência.
+4. Corrigir terminologia inconsistente
+   · "Faturamento" → "Receita" (unificar com IA)
+   · "Equipa" → "Profissionais" (ou vice-versa)
+   · Evidência: Lei da Clareza, Capítulo 10 da Ciência da Experiência.
+5. Corrigir border-radius dos botões
+   · Mudar 9999px → 6px (max) ou 4px (estrutural).
+   · Evidência: Anti-Padrão #2 da Constituição, Capítulo 4.
+
+🟠 Estruturais (corrigir antes do próximo deploy)
+
+6. Aumentar altura do btn-xs para ≥ 44px.
+7. Aumentar .kpi-value para 24px (1.5rem).
+8. Corrigir contraste do plano Pro.
+9. Aumentar distância FAB ↔ Bottom nav para ≥ 24px.
+10. Reduzir transição fadeUp para ≤ 200ms.
+11. Substituir erros via toast por erros inline nos campos.
+12. Adicionar skeletons para carregamentos.
+13. IA deve funcionar offline (ou ter mensagem clara).
+
+🟡 Contextuais (documentar)
+
+14. Corrigir --text-muted para #8C857A.
+15. Remover fallback 'Inter' de --font-serif.
+16. Navegação em verbos ("Resumo" → "Dashboard"?).
+17. Documentar exceções (splash com 3 animações, por exemplo).
+
+🟢 Adaptativas (apenas documentar)
+
+18. Tokens --space-7 a --space-24 — documentar como extensão do Design System.
+19. Tempos máximos de fluxo — definir e documentar.
+
+---
+
+PONTUAÇÃO FINAL DE CONFORMIDADE
+
+Documento Nível Pontuação Justificação
+Constituição 1 3.5/10 10 proibições violadas, 5 leis com violações
+Ciência da Experiência 2 4.0/10 13 violações em 10 capítulos
+Design System 3 6.5/10 Tokens maioritariamente corretos, mas componentes com desvios
+Governança 4 2.0/10 Matriz de auditoria tem 15 violações críticas
+Protocolo Universal 0 0/10 Nenhum passo documentado
+Manual de Execução 5 1.0/10 Apenas código escrito (Fase 6)
+
+Média global: 2.8/10
+
+---
+
+CONCLUSÃO
+
+O código do BelezaPro não está em conformidade com a Constituição do Produto. As violações são numerosas e em todos os níveis (Crítico a Adaptativo). As principais causas são:
+
+1. Falta de seguimento do Protocolo Universal — as decisões não foram rastreadas.
+2. Inconsistência entre Design System e Constituição — o primeiro define border-radius: 9999px para botões, a segunda proíbe > 6px.
+3. Excesso de elementos de destaque — viola a Economia Cognitiva.
+4. Terminologia inconsistente — viola a Lei da Clareza.
+5. Feedback de sucesso via modal — viola a Lei da Eficiência.
+
+Recomendação final: antes de qualquer novo desenvolvimento, a equipa deve:
+
+1. Rever a Constituição e alinhar o Design System com ela.
+2. Corrigir as 15 violações críticas listadas.
+3. Implementar o Protocolo Universal de Execução para todas as novas decisões.
+4. Documentar todas as exceções aprovadas (ex: splash com 3 animações).
+5. Criar um processo de auditoria contínua (automática + manual) para garantir conformidade futura.
+
+---
+
+Data da auditoria: 22 de Julho de 2026
+
+Auditor: Sistema de IA (em conformidade com o Protocolo Universal de Execução)
+
+Próximo passo: Aguardar confirmação da equipa para iniciar a correção das violações....
+
+Aqui vak o plano de ação para o cumprimento de incossistencias anotadas pela análise 
+PLANO DE AÇÃO — BELEZAPRO
+
+Correção de Conformidade e Estabilização Técnica
+
+Versão: 1.0
+Data: 22/07/2026
+Base: Auditoria Técnica Completa (Documentos 0–5 + Blueprint)
+Objetivo: Alinhar 100% do código com a Constituição, Ciência da Experiência, Design System e Governança, eliminando todas as violações críticas e estruturais.
+
+---
+
+CRONOGRAMA GERAL (20 DIAS ÚTEIS)
+
+Fase Dias Foco Entregável
+0 – Preparação 1–2 Governança e ferramentas Comité, repositório de decisões, linters
+1 – Críticas 3–7 15 violações 🔴 Dashboard em conformidade, terminologia unificada
+2 – Estruturais 8–12 18 violações 🟠 Componentes ajustados, skeletons, erros inline
+3 – Design System 13–15 Inconsistências de tokens Tokens alinhados, componentes revistos
+4 – Protocolo 16–18 Documentação e processo Template de decisão, checklists
+5 – Validação 19–20 Testes e deploy Auditoria final, aprovação, produção
+
+---
+
+FASES DETALHADAS
+
+FASE 0 – PREPARAÇÃO E GOVERNANÇA (Dias 1–2)
+
+Responsável: Product Owner + Lead Developer
+
+Tarefa Critério de sucesso
+Criar Comité de Conformidade (3 pessoas) Designados e com reunião de kick-off
+Definir repositório de decisões (ex: /docs/decisions/) Template aprovado e commit inicial
+Implementar linters CSS (Stylelint com regras personalizadas) Verifica tokens, border-radius, contraste (via CLI)
+Implementar script de contagem de CTAs/destaques (Node.js) Relatório automático por viewport
+Congelar novas features até correção das críticas Aprovado em reunião de produto
+
+Ferramentas sugeridas:
+
+· stylelint-config-standard + regras customizadas
+· puppeteer para contagem de elementos por viewport
+· wcag-contrast para verificação automática
+
+---
+
+FASE 1 – CORREÇÃO DAS VIOLAÇÕES CRÍTICAS (Dias 3–7)
+
+Responsável: Lead Developer + Frontend Engineer
+
+# Tarefa Ficheiros afetados Critério de sucesso
+1 Remover 1 CTA do Dashboard (decidir entre FAB e venda-cta-bar) index.html, ui-events-navegacao.js Dashboard com ≤1 CTA primário
+2 Reduzir elementos de destaque para ≤3 index.html, kpis-caixa-listas.css Contagem automática ≤3
+3 Remover modal de sucesso da venda → substituir por toast animado index.html, vendas-modais.js, eventos-caixa-vendas.js Sucesso não bloqueante
+4 Unificar terminologia (ver lista) Todos os ficheiros com labels Auditoria manual 100% consistente
+5 Corrigir border-radius dos botões (9999px → 6px) componentes-base.css, modais-toast-fab.css Nenhum botão com radius >6px
+6 Reduzir splash para 1 animação (apenas fade-in) splash-sparkline.css Apenas uma keyframe ativa
+7 Erros inline (validação de duplicados, campos obrigatórios) crud-operations.js, ui-render-*.js, core-utils.js Erros aparecem junto ao campo com auto-foco
+
+Terminologia unificada (definição obrigatória):
+
+Termo atual Novo termo Onde aplicar
+Faturamento Receita KPI, IA, gráfico
+Equipa Profissionais Aba, títulos, listas
+Serviços Serviços (manter) Todos os locais
+Cliente (agenda) Cliente Sem alteração (mesma entidade)
+"Nova Venda" "Registar Venda" Botão CTA
+
+Testes manuais obrigatórios:
+
+· Login, criar agendamento, registar venda, fecho de caixa – todos devem funcionar sem erros visuais.
+
+---
+
+FASE 2 – CORREÇÃO DAS VIOLAÇÕES ESTRUTURAIS (Dias 8–12)
+
+Responsável: Frontend Engineer + QA
+
+# Tarefa Ficheiros afetados Critério de sucesso
+8 Ajustar btn-xs para altura ≥44px (ou remover) componentes-base.css Todos os botões ≥44px
+9 Aumentar .kpi-value para 24px (1.5rem) kpis-caixa-listas.css Valor do KPI com 24px
+10 Corrigir contraste do plano "Pro" componentes-base.css, design-tokens-extra.css Razão ≥4.5:1 (usar #5C564E sobre #FBF6E9 ou escurecer fundo)
+11 Aumentar distância FAB ↔ bottom nav para ≥24px modais-toast-fab.css bottom: 110px ou ajuste de padding
+12 Reduzir transição fadeUp para ≤200ms layout-nav-tabs.css animation-duration: 0.2s
+13 Implementar erros inline (substituir toasts de validação) core-utils.js, crud-operations.js, ui-render-*.js Erros aparecem junto ao campo
+14 Adicionar skeletons para carregamentos main.js, ui-render-*.html, splash-sparkline.css Skeletons visíveis <300ms
+15 IA offline: mensagem clara em vez de overlay apenas ia-module.js, ia.css Texto "IA indisponível offline" com ícone
+
+Testes manuais:
+
+· Carregar lista com 100+ clientes – skeleton deve aparecer.
+· Desligar rede, abrir IA – mensagem clara.
+· Verificar contraste com ferramenta (ex: Lighthouse).
+
+---
+
+FASE 3 – CORREÇÃO DE INCONSISTÊNCIAS NO DESIGN SYSTEM (Dias 13–15)
+
+Responsável: Lead Developer + Design Lead
+
+# Tarefa Ficheiros afetados Critério de sucesso
+16 Corrigir --text-muted para #8C857A base-variaveis.css Token exatamente conforme especificação
+17 Remover fallback 'Inter' de --font-serif base-variaveis.css Apenas 'Playfair Display', serif
+18 Remover tokens não definidos (--space-7 a --space-24) ou documentar como extensão design-tokens-extra.css Decisão documentada no repositório
+19 Ajustar --gold-light para ter contraste com texto escuro base-variaveis.css, componentes-base.css Texto sobre --gold-light ≥4.5:1
+20 Rever todos os componentes contra especificação do Design System Todos os CSS Auditoria manual com checklist (ver Anexo)
+
+Checklist de auditoria de componentes (exemplo):
+
+· Botões: altura, padding, radius, fonte, estados.
+· Inputs: altura, border, background, focus, error.
+· Cards: radius, shadow, padding.
+· List items: padding, gap, avatar size.
+· KPI cards: padding, min-height, font sizes.
+· Badges: padding, font, text-transform.
+· Modais: padding, max-height, overlay.
+· Bottom nav: altura, ícones, font.
+
+---
+
+FASE 4 – IMPLEMENTAÇÃO DO PROTOCOLO UNIVERSAL E DOCUMENTAÇÃO (Dias 16–18)
+
+Responsável: Product Owner + Lead Developer
+
+# Tarefa Ficheiros afetados Critério de sucesso
+21 Criar template de decisão (Documento 0) /docs/decision-template.md Template aprovado e usado para cada alteração futura
+22 Documentar retroativamente as correções feitas /docs/decisions/ Pelo menos um documento por correção crítica
+23 Definir checklists de auditoria automática (linters) CI/CD pipeline (ex: GitHub Actions) Linters correm em cada PR
+24 Atualizar README e guia do desenvolvedor README.md, CONTRIBUTING.md Processo de governança documentado
+
+Template de decisão (exemplo):
+
+```markdown
+# Decisão: [assunto]
+**Data:** YYYY-MM-DD  
+**Justificação (Categoria):** [Comportamento humano | Eficiência operacional | Consistência sistémica | Evidência científica]  
+**Violações corrigidas:** [lista]  
+**Alternativas consideradas:** [descrição]  
+**Aprovação:** [Comité]  
+```
+
+---
+
+FASE 5 – VALIDAÇÃO FINAL E DEPLOY (Dias 19–20)
+
+Responsável: QA + Comité de Conformidade
+
+Tarefa Critério de sucesso
+Executar auditoria completa (automática + manual) em staging Nenhuma violação crítica ou estrutural
+Testes de usabilidade com 3-5 utilizadores reais Perceção de velocidade ≥5/7; clareza ≥4.2/5
+Aprovação do Comité de Conformidade Assinatura digital (ou email)
+Deploy em produção Rollback planeado em caso de regressão
+
+Métricas finais:
+
+· NPS ≥70 (ou melhoria face à versão anterior).
+· Tempo médio para venda ≤90s (medido com ferramenta).
+· Auditoria automática passa com 100% de conformidade.
+
+---
+
+RESPONSABILIDADES E RECURSOS
+
+Papel Pessoa (sugerida) Responsabilidades
+Product Owner [nome] Aprovações, decisões de produto, comunicação
+Lead Developer [nome] Supervisão técnica, revisão de código, integração
+Frontend Engineer [nome] Implementação de UI, correções CSS/JS
+QA Engineer [nome] Testes manuais, automação, auditoria
+Design Lead [nome] Validação de Design System, consistência visual
+
+Carga horária estimada:
+
+· Frontend: 80h (2 pessoas × 40h)
+· QA: 40h
+· Lead/PO: 20h (supervisão)
+  Total: 140h-homem (aprox. 4 semanas com 2 devs + 1 QA).
+
+---
+
+RISCOS E MITIGAÇÃO
+
+Risco Probabilidade Impacto Mitigação
+Regressões nas correções Média Alto Testes manuais em todas as funcionalidades após cada correção; manter branch de staging separada
+Resistência a mudanças visuais (ex: border-radius) Baixa Médio Envolver utilizadores piloto para feedback; apresentar justificação baseada na Constituição
+Atraso nas correções estruturais Média Médio Priorizar as mais críticas (contraste, altura de botões) e documentar as restantes como pendentes
+Falta de documentação retrospetiva Baixa Baixo Atribuir responsável por documentação diária (30 min)
+
+---
+
+ANEXO — CHECKLIST DE AUDITORIA MANUAL (FASE 3)
+
+Componente Propriedade Valor esperado OK?
+Botão primário border-radius 6px (ou ≤6px) 
+Botão primário altura mínima 48px 
+Input border-radius 4px 
+Input altura 48px 
+Card border-radius 4px 
+Card sombra 0 1px 0 rgba(20,17,15,.06) 
+List item padding 12px 16px 
+List item gap 14px 
+KPI card padding 16px 
+KPI card min-height 88px 
+KPI value font-size 24px 
+Badge padding 2px 10px 
+Badge font-size 9px 
+Modal padding 24px 20px 
+Modal max-height 92vh 
+Bottom nav altura 72px 
+Bottom nav item font-size 10px 
+
+---
+
+APROVAÇÕES
+
+Cargo Nome Data Assinatura
+Product Owner   
+Lead Developer   
+Design Lead   
+
+---
+
+Próximo passo: Iniciar Fase 0 imediatamente. Reunião de kick-off agendada para o Dia 1.
