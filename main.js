@@ -108,16 +108,34 @@ document.addEventListener('DOMContentLoaded', async function init() {
 
   console.log('✅ BeautyPro inicializado com sucesso!');
 
-  // ✅ Ponto 2 — Sincronização periódica a cada 30 segundos
+  // ✅ Ponto 2 — Sincronização periódica a cada 15 segundos (antes 30s)
+  // Reduzido para melhor reatividade entre dispositivos
   setInterval(() => {
     if (navigator.onLine && document.visibilityState === 'visible' && state?.config?.salaoId) {
       carregarDoSupabase().then(atualizado => {
         if (atualizado) updateUI();
       }).catch(() => {});
     }
-  }, 30000);
+  }, 15000); // 15 segundos
 
-  // ✅ Passo 1 (revisão) — FAB encolhe/esmaece durante scroll ativo, para
+  // ✅ Ponto 3 — Forçar pull quando a app volta ao foco (visível)
+  // Isto garante que ao trocar de app e voltar, os dados são atualizados
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && navigator.onLine && state?.config?.salaoId) {
+      console.log('[Sync] App visível, a sincronizar...');
+      try {
+        const atualizado = await carregarDoSupabase();
+        if (atualizado) {
+          updateUI();
+          console.log('[Sync] Dados atualizados após retorno ao foco.');
+        }
+      } catch (e) {
+        console.warn('[Sync] Falha ao sincronizar ao voltar ao foco:', e);
+      }
+    }
+  });
+
+  // ✅ Passo 4 (revisão) — FAB encolhe/esmaece durante scroll ativo, para
   // nunca bloquear de forma permanente um botão de ação (Ajustar/Excluir)
   // de uma linha que passe por baixo dele. Volta ao normal 250ms depois
   // do scroll parar. addEventListener com { passive: true } — só lê a

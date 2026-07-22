@@ -227,9 +227,24 @@ async function updateCliente(id, data) {
   updateUI();
 }
 async function deleteCliente(id) {
+  // 1. Eliminar localmente
   await dbDelete('clientes', id);
   state.clientes = state.clientes.filter(c => c.id !== id);
   updateUI();
+
+  // 2. Forçar sincronização (pull) para garantir que todos os dispositivos recebem a eliminação
+  if (navigator.onLine && state.config.salaoId) {
+    try {
+      await carregarDoSupabase();
+      updateUI();
+      toast('Cliente eliminado e sincronizado!', 'success');
+    } catch (e) {
+      console.warn('[deleteCliente] Falha ao sincronizar após eliminação:', e);
+      toast('Cliente eliminado localmente. A sincronização falhou.', 'warning');
+    }
+  } else {
+    toast('Cliente eliminado (offline). Será sincronizado quando online.', 'warning');
+  }
 }
 
 // -------------------- AGENDAMENTO --------------------
@@ -283,6 +298,20 @@ async function deleteAgendamento(id) {
   await dbDelete('agendamentos', id);
   state.agendamentos = state.agendamentos.filter(a => a.id !== id);
   updateUI();
+
+  // Forçar sincronização
+  if (navigator.onLine && state.config.salaoId) {
+    try {
+      await carregarDoSupabase();
+      updateUI();
+      toast('Agendamento eliminado e sincronizado!', 'success');
+    } catch (e) {
+      console.warn('[deleteAgendamento] Falha ao sincronizar:', e);
+      toast('Agendamento eliminado localmente. A sincronização falhou.', 'warning');
+    }
+  } else {
+    toast('Agendamento eliminado (offline). Será sincronizado quando online.', 'warning');
+  }
 }
 
 // -------------------- PROFISSIONAL --------------------
@@ -329,6 +358,20 @@ async function deleteProfissional(id) {
   await dbDelete('profissionais', id);
   state.profissionais = state.profissionais.filter(p => p.id !== id);
   updateUI();
+
+  // Forçar sincronização
+  if (navigator.onLine && state.config.salaoId) {
+    try {
+      await carregarDoSupabase();
+      updateUI();
+      toast('Profissional eliminado e sincronizado!', 'success');
+    } catch (e) {
+      console.warn('[deleteProfissional] Falha ao sincronizar:', e);
+      toast('Profissional eliminado localmente. A sincronização falhou.', 'warning');
+    }
+  } else {
+    toast('Profissional eliminado (offline). Será sincronizado quando online.', 'warning');
+  }
 }
 
 // -------------------- SERVIÇO --------------------
@@ -366,6 +409,20 @@ async function deleteServico(id) {
   await dbDelete('servicos', id);
   state.servicos = state.servicos.filter(s => s.id !== id);
   updateUI();
+
+  // Forçar sincronização
+  if (navigator.onLine && state.config.salaoId) {
+    try {
+      await carregarDoSupabase();
+      updateUI();
+      toast('Serviço eliminado e sincronizado!', 'success');
+    } catch (e) {
+      console.warn('[deleteServico] Falha ao sincronizar:', e);
+      toast('Serviço eliminado localmente. A sincronização falhou.', 'warning');
+    }
+  } else {
+    toast('Serviço eliminado (offline). Será sincronizado quando online.', 'warning');
+  }
 }
 
 function getServicoById(id) {
