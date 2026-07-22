@@ -359,6 +359,29 @@ async function carregarDoSupabase() {
       );
 
       // ================================================================
+      // CORREÇÃO CRÍTICA (eliminações não propagavam entre dispositivos):
+      // um item que existe só localmente pode significar duas coisas muito
+      // diferentes:
+      //   a) foi criado/editado neste dispositivo e ainda não chegou ao
+      //      servidor (está na fila de upsert) → deve ser preservado;
+      //   b) já existiu no servidor mas foi eliminado (por este ou por
+      //      OUTRO dispositivo) → não deve ser preservado.
+      // O código anterior tratava sempre como (a), porque assumia que
+      // "existe local, não existe remoto" só podia significar "ainda não
+      // sincronizado". Isso fazia clientes/profissionais eliminados
+      // reaparecerem em qualquer dispositivo que não tivesse sido o autor
+      // da eliminação (a lista negra e a fila de delete são por
+      // dispositivo, nunca chegam a existir no dispositivo B). A única
+      // forma segura de saber que (a) é o caso é este item estar
+      // efetivamente pendente de upsert NESTE dispositivo.
+      // ================================================================
+      const idsComUpsertPendente = new Set(
+        getSyncQueue()
+          .filter(op => op.tabela === tabela && op.operacao === 'upsert')
+          .map(op => op.payload?.id)
+      );
+
+      // ================================================================
       // POLÍTICA FORTE: Mapa de nomes para detetar duplicados
       // ================================================================
       const nomesExistentes = new Map();
@@ -431,6 +454,14 @@ async function carregarDoSupabase() {
 
       // Itens locais que não existem no remoto
       for (const [id, local] of mapLocal) {
+        // CORREÇÃO CRÍTICA: só preservar como "criação local pendente" se
+        // este dispositivo tiver mesmo uma operação de upsert em fila para
+        // este id. Caso contrário — incluindo quando este id está na lista
+        // negra ou na fila de delete deste dispositivo — o item deixou de
+        // existir no servidor e NÃO deve ser reintroduzido.
+        if (deletedIds.has(id) || idsComDeletePendente.has(id) || !idsComUpsertPendente.has(id)) {
+          continue;
+        }
         // Verificar se o nome local não conflita com algum nome remoto já processado
         if (local.nome) {
           const chave = local.nome.trim().toLowerCase();
