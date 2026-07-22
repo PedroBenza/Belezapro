@@ -66,16 +66,11 @@ async function loadState(trocouDeSalao = false) {
 
   let clientes, agendamentos, movimentos, profs, servicos, fechos;
   if (trocouDeSalao) {
-    // Este dispositivo já teve dados de OUTRO salão gravados localmente.
-    // Limpar tudo antes de continuar, para nunca misturar clientes/
-    // agendamentos/movimentos/profissionais/serviços entre salões.
     await Promise.all(['clientes', 'agendamentos', 'movimentos', 'profissionais', 'servicos', 'fechos_caixa'].map(dbClear));
-    // Limpar também a fila de sincronização para não enviar dados do salão antigo
     localStorage.removeItem(SYNC_QUEUE_KEY);
     clientes = []; agendamentos = []; movimentos = []; profs = []; servicos = []; fechos = [];
-    console.warn('[BeautyPro] Troca de salão detetada neste dispositivo — dados locais e fila de sync foram limpos.');
+    console.warn('[BeautyPro] Troca de salão detetada — dados locais e fila de sync limpos.');
   } else {
-    // Buscar dados apenas se NÃO houve troca de salão
     const [clientesData, agendamentosData, movimentosData, profsData, servicosData, fechosData] = await Promise.all([
       dbGetAll('clientes'),
       dbGetAll('agendamentos'),
@@ -92,9 +87,6 @@ async function loadState(trocouDeSalao = false) {
     fechos = fechosData;
   }
 
-  // ============================================================
-  // SANITIZAÇÃO: GARANTIR QUE TUDO É ARRAY (previne undefined)
-  // ============================================================
   const safe = (arr) => Array.isArray(arr) ? arr : [];
   const safeClientes = safe(clientes);
   const safeAgendamentos = safe(agendamentos);
@@ -103,14 +95,6 @@ async function loadState(trocouDeSalao = false) {
   const safeServicos = safe(servicos);
   const safeFechos = safe(fechos);
 
-  // CORREÇÃO (causa-raiz do 403 em profissionais/serviços): PROF_DEFAULT
-  // e SERVICOS_DEFAULT em core-constants.js têm IDs fixos, iguais para
-  // TODOS os salões. O primeiro salão a sincronizar "ganha" essas linhas
-  // no Supabase; qualquer salão seguinte tenta um upsert com o mesmo id
-  // e salao_id diferente — a RLS bloqueia (403), porque a linha já
-  // pertence a outro salão. Geramos um id novo por salão aqui, uma única
-  // vez, e usamos o MESMO valor tanto no state em memória como no que é
-  // gravado/sincronizado — nunca os IDs fixos da constante diretamente.
   const profsPadraoComIdProprio = PROF_DEFAULT.map(p => ({ ...p, id: uuid() }));
   const servicosPadraoComIdProprio = SERVICOS_DEFAULT.map(s => ({ ...s, id: uuid() }));
 
@@ -137,28 +121,19 @@ async function loadState(trocouDeSalao = false) {
     await dbPut('config', { id: 'plano', key: 'plano', value: 'trial' });
   }
 
-  // ============================================================
-  // CORREÇÃO DEFINITIVA — INSERIR DEFAULTS APENAS SE NÃO EXISTIR NENHUM REGISTO
-  // Verifica diretamente no IndexedDB (não confia apenas no state em memória)
-  // ============================================================
-  // Profissionais
+  // INSERIR DEFAULTS APENAS SE NÃO EXISTIR NENHUM REGISTO
   if (safeProfs.length === 0) {
     const existing = await dbGetAll('profissionais');
     if (existing.length === 0) {
       for (const p of profsPadraoComIdProprio) await dbPut('profissionais', p);
-      console.log('[loadState] Profissionais padrão inseridos (base de dados vazia).');
-    } else {
-      console.log('[loadState] Profissionais existentes encontrados, não insere defaults.');
+      console.log('[loadState] Profissionais padrão inseridos.');
     }
   }
-  // Serviços
   if (safeServicos.length === 0) {
     const existing = await dbGetAll('servicos');
     if (existing.length === 0) {
       for (const s of servicosPadraoComIdProprio) await dbPut('servicos', s);
-      console.log('[loadState] Serviços padrão inseridos (base de dados vazia).');
-    } else {
-      console.log('[loadState] Serviços existentes encontrados, não insere defaults.');
+      console.log('[loadState] Serviços padrão inseridos.');
     }
   }
 
@@ -170,7 +145,6 @@ async function loadState(trocouDeSalao = false) {
 
   updateUI();
 }
-// sincronizarConfigDoServidor movido para auth-supabase.js (Fase B da modularização)
 
 async function saveConfig() {
   await dbPut('config', { id: 'storeName', key: 'storeName', value: state.config.storeName });
@@ -183,7 +157,7 @@ async function saveConfig() {
 }
 
 // ====================================================================
-//  CRUD FUNCTIONS (preservadas do original)
+//  CRUD FUNCTIONS
 // ====================================================================
 
 // -------------------- CLIENTE --------------------
@@ -226,20 +200,23 @@ async function updateCliente(id, data) {
   await dbPut('clientes', state.clientes[i]);
   updateUI();
 }
+
 async function deleteCliente(id) {
   // 1. Eliminar localmente
   await dbDelete('clientes', id);
   state.clientes = state.clientes.filter(c => c.id !== id);
   updateUI();
 
-  // 2. Forçar sincronização (pull) para garantir que todos os dispositivos recebem a eliminação
+  // 2. Forçar envio da eliminação para o Supabase (processar fila)
   if (navigator.onLine && state.config.salaoId) {
     try {
+      await flushSyncQueue(); // Envia o delete pendente
+      // 3. Após enviar, puxar dados atualizados do servidor
       await carregarDoSupabase();
       updateUI();
       toast('Cliente eliminado e sincronizado!', 'success');
     } catch (e) {
-      console.warn('[deleteCliente] Falha ao sincronizar após eliminação:', e);
+      console.warn('[deleteCliente] Falha ao sincronizar:', e);
       toast('Cliente eliminado localmente. A sincronização falhou.', 'warning');
     }
   } else {
@@ -299,9 +276,9 @@ async function deleteAgendamento(id) {
   state.agendamentos = state.agendamentos.filter(a => a.id !== id);
   updateUI();
 
-  // Forçar sincronização
   if (navigator.onLine && state.config.salaoId) {
     try {
+      await flushSyncQueue();
       await carregarDoSupabase();
       updateUI();
       toast('Agendamento eliminado e sincronizado!', 'success');
@@ -354,14 +331,15 @@ async function updateProfissional(id, data) {
   await dbPut('profissionais', state.profissionais[i]);
   updateUI();
 }
+
 async function deleteProfissional(id) {
   await dbDelete('profissionais', id);
   state.profissionais = state.profissionais.filter(p => p.id !== id);
   updateUI();
 
-  // Forçar sincronização
   if (navigator.onLine && state.config.salaoId) {
     try {
+      await flushSyncQueue();
       await carregarDoSupabase();
       updateUI();
       toast('Profissional eliminado e sincronizado!', 'success');
@@ -405,14 +383,15 @@ async function updateServico(id, data) {
   await dbPut('servicos', state.servicos[i]);
   updateUI();
 }
+
 async function deleteServico(id) {
   await dbDelete('servicos', id);
   state.servicos = state.servicos.filter(s => s.id !== id);
   updateUI();
 
-  // Forçar sincronização
   if (navigator.onLine && state.config.salaoId) {
     try {
+      await flushSyncQueue();
       await carregarDoSupabase();
       updateUI();
       toast('Serviço eliminado e sincronizado!', 'success');
@@ -443,13 +422,11 @@ function getProfissionaisPorServico(nomeServico) {
 
 // -------------------- VENDA --------------------
 async function registarVenda(dados) {
-  // Validação de cliente obrigatório
   if (!dados.cliente || dados.cliente.trim() === '') {
     toast('Selecione ou crie um cliente antes de registar a venda.', 'error');
     return null;
   }
 
-  // VALIDAÇÃO DE PROFISSIONAL OBRIGATÓRIO
   if (!dados.profissional_id || dados.profissional_id.trim() === '') {
     toast('Selecione um profissional antes de registar a venda.', 'error');
     return null;
