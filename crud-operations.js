@@ -138,18 +138,27 @@ async function loadState(trocouDeSalao = false) {
   }
 
   // ============================================================
-  // CORREÇÃO — INSERIR DEFAULTS APENAS SE A BASE DE DADOS ESTIVER VAZIA
+  // CORREÇÃO DEFINITIVA — INSERIR DEFAULTS APENAS SE NÃO EXISTIR NENHUM REGISTO
+  // Verifica diretamente no IndexedDB (não confia apenas no state em memória)
   // ============================================================
+  // Profissionais
   if (safeProfs.length === 0) {
     const existing = await dbGetAll('profissionais');
     if (existing.length === 0) {
       for (const p of profsPadraoComIdProprio) await dbPut('profissionais', p);
+      console.log('[loadState] Profissionais padrão inseridos (base de dados vazia).');
+    } else {
+      console.log('[loadState] Profissionais existentes encontrados, não insere defaults.');
     }
   }
+  // Serviços
   if (safeServicos.length === 0) {
     const existing = await dbGetAll('servicos');
     if (existing.length === 0) {
       for (const s of servicosPadraoComIdProprio) await dbPut('servicos', s);
+      console.log('[loadState] Serviços padrão inseridos (base de dados vazia).');
+    } else {
+      console.log('[loadState] Serviços existentes encontrados, não insere defaults.');
     }
   }
 
