@@ -95,14 +95,20 @@ async function loadState(trocouDeSalao = false) {
   const safeServicos = safe(servicos);
   const safeFechos = safe(fechos);
 
-  const profsPadraoComIdProprio = PROF_DEFAULT.map(p => ({ ...p, id: uuid() }));
-  const servicosPadraoComIdProprio = SERVICOS_DEFAULT.map(s => ({ ...s, id: uuid() }));
+  // Os arrays de padrões já não são usados para criação automática
+  // Mantidos apenas para referência, mas não inseridos.
+  // const profsPadraoComIdProprio = PROF_DEFAULT.map(p => ({ ...p, id: uuid() }));
+  // const servicosPadraoComIdProprio = SERVICOS_DEFAULT.map(s => ({ ...s, id: uuid() }));
 
+  // ============================================================
+  // ALTERAÇÃO: NÃO INSERIR PROFISSIONAIS OU SERVIÇOS PADRÃO
+  // Se não houver dados, as listas ficam vazias.
+  // ============================================================
   state.clientes = safeClientes;
   state.agendamentos = safeAgendamentos;
   state.movimentos = safeMovimentos;
-  state.profissionais = safeProfs.length ? safeProfs : profsPadraoComIdProprio;
-  state.servicos = safeServicos.length ? safeServicos : servicosPadraoComIdProprio;
+  state.profissionais = safeProfs; // já não substitui por padrões
+  state.servicos = safeServicos;   // já não substitui por padrões
   state.fechos_caixa = safeFechos;
 
   const chartPeriodo = localStorage.getItem('bp_chart_periodo') || 'semana';
@@ -121,20 +127,14 @@ async function loadState(trocouDeSalao = false) {
     await dbPut('config', { id: 'plano', key: 'plano', value: 'trial' });
   }
 
-  // INSERIR DEFAULTS APENAS SE NÃO EXISTIR NENHUM REGISTO
+  // ============================================================
+  // CRIAÇÃO AUTOMÁTICA DESATIVADA — não insere profissionais ou serviços padrão
+  // ============================================================
   if (safeProfs.length === 0) {
-    const existing = await dbGetAll('profissionais');
-    if (existing.length === 0) {
-      for (const p of profsPadraoComIdProprio) await dbPut('profissionais', p);
-      console.log('[loadState] Profissionais padrão inseridos.');
-    }
+    console.log('[loadState] Nenhum profissional encontrado. Criação automática desativada.');
   }
   if (safeServicos.length === 0) {
-    const existing = await dbGetAll('servicos');
-    if (existing.length === 0) {
-      for (const s of servicosPadraoComIdProprio) await dbPut('servicos', s);
-      console.log('[loadState] Serviços padrão inseridos.');
-    }
+    console.log('[loadState] Nenhum serviço encontrado. Criação automática desativada.');
   }
 
   if (state.config.salaoId && navigator.onLine) {

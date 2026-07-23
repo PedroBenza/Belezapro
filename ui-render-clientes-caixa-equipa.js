@@ -227,6 +227,14 @@ function populateAgendaSelects() {
   const profSel = document.getElementById('agenda-profissional');
   const servSel = document.getElementById('agenda-servico');
   if (!profSel || !servSel) return;
+
+  // Verificar se há serviços
+  if (state.servicos.length === 0) {
+    servSel.innerHTML = '<option value="">Nenhum serviço disponível</option>';
+    profSel.innerHTML = '<option value="">Nenhum profissional disponível</option>';
+    return;
+  }
+
   const prevServico = servSel.value;
   servSel.innerHTML = state.servicos.map(s =>
     `<option value="${escHtml(s.nome)}">${escHtml(s.nome)}</option>`
@@ -234,6 +242,12 @@ function populateAgendaSelects() {
   if (prevServico) servSel.value = prevServico;
 
   const filtrarProfsAgenda = (servicoNome) => {
+    // Se não houver profissionais, mostrar opção vazia
+    if (state.profissionais.length === 0) {
+      profSel.innerHTML = '<option value="">Nenhum profissional disponível</option>';
+      return;
+    }
+
     let profs;
     if (!servicoNome || servicoNome === 'Outro') {
       profs = state.profissionais.map(p => ({ id: p.id, nome: p.nome }));
@@ -252,6 +266,7 @@ function populateAgendaSelects() {
     ).join('');
     if (profs.some(p => p.id === prevProfId)) profSel.value = prevProfId;
   };
+
   filtrarProfsAgenda(servSel.value);
   if (servSel._filterHandler) servSel.removeEventListener('change', servSel._filterHandler);
   servSel._filterHandler = function() { filtrarProfsAgenda(this.value); };
@@ -262,11 +277,16 @@ function populateVendaSelects() {
   const profSel = document.getElementById('venda-profissional');
   const catSel = document.getElementById('ci-servico-sel');
   if (!profSel || !catSel) return;
-  
-  // Remove qualquer seleção anterior
+
+  // Verificar se há serviços
+  if (state.servicos.length === 0) {
+    catSel.innerHTML = '<option value="">Nenhum serviço disponível</option>';
+    profSel.innerHTML = '<option value="">Nenhum profissional disponível</option>';
+    return;
+  }
+
   catSel.selectedIndex = -1;
 
-  // Preenche o select de serviços com uma opção vazia no início
   catSel.innerHTML = `<option value="">Selecionar serviço</option>` +
     state.servicos.map(s =>
       `<option value="${escHtml(s.nome)}" data-preco="${s.precoBase}">${escHtml(s.nome)}</option>`
@@ -274,6 +294,12 @@ function populateVendaSelects() {
     '<option value="__custom" data-preco="">✏️ Outro (personalizado)</option>';
 
   const filtrarProfsVenda = (servicoNome) => {
+    // Se não houver profissionais, mostrar opção vazia
+    if (state.profissionais.length === 0) {
+      profSel.innerHTML = '<option value="">Nenhum profissional disponível</option>';
+      return;
+    }
+
     let profs;
     if (!servicoNome || servicoNome === '__custom') {
       profs = state.profissionais.map(p => ({ id: p.id, nome: p.nome }));
@@ -286,15 +312,11 @@ function populateVendaSelects() {
         .filter(p => nomes.includes(p.nome))
         .map(p => ({ id: p.id, nome: p.nome }));
     }
-    // Preenche o select de profissionais com uma opção vazia no início
     profSel.innerHTML = `<option value="">Selecionar profissional</option>` +
       profs.map(p =>
         `<option value="${p.id}">${escHtml(p.nome)}</option>`
       ).join('');
   };
-
-  // Remove a chamada automática do filtro (para não pré-selecionar)
-  // filtrarProfsVenda(catSel.value); // REMOVIDO
 
   if (catSel._filterHandler) catSel.removeEventListener('change', catSel._filterHandler);
   catSel._filterHandler = function() {
@@ -310,6 +332,4 @@ function populateVendaSelects() {
     }
   };
   catSel.addEventListener('change', catSel._filterHandler);
-  // Remove a chamada automática no final
-  // if (catSel.value) catSel._filterHandler.call(catSel); // REMOVIDO
 }
