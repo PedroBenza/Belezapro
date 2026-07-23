@@ -891,19 +891,21 @@
       <button class="btn btn-secondary btn-block mt-3" id="modal-agenda-close">Fechar</button>
     </div>
   </div>
-<!-- MODAL CONFIRMAÇÃO -->
-  <div id="modal-confirm" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
-    <div class="modal-confirm-sheet">
-      <div class="confirm-icon">⚠️</div>
-      <h2 id="confirm-title" class="confirm-title">Tem a certeza?</h2>
-      <p id="confirm-message" class="confirm-message">Esta acção não pode ser desfeita.</p>
-      <div class="confirm-actions">
-        <button class="btn btn-secondary" id="confirm-cancel-btn" style="flex:1;">Cancelar</button>
-        <button class="btn btn-danger" id="confirm-ok-btn" style="flex:2;">Confirmar</button>
-      </div>
+<!-- MODAL CONFIRMAÇÃO (LOGOUT) -->
+<div id="modal-confirm" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="modal-confirm-sheet">
+    <div class="confirm-icon">⚠️</div>
+    <h2 id="confirm-title" class="confirm-title">O senhor(a) sairá da aplicação?</h2>
+    <p id="confirm-message" class="confirm-message">As suas vendas e agendamentos estão guardados em segurança. Pode voltar a qualquer momento.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" id="confirm-cancel-btn" style="flex:1;">Regressar</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" style="flex:1;">Sair agora</button>
     </div>
+    <label>
+      <input type="checkbox" id="keep-logged"> Manter-me ligado neste dispositivo
+    </label>
   </div>
-
+</div>
   <!-- MODAL ERRO -->
   <div id="modal-erro" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="erro-title">
     <div class="modal-confirm-sheet" style="text-align:center;">

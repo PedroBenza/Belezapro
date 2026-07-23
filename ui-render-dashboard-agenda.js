@@ -1,13 +1,15 @@
 // ====================================================================
 //  ui-render-dashboard-agenda.js — extraído do app.js (Fase C da modularização)
-//  Conteúdo: Renderização do Resumo (dashboard) e Agenda
+//  #modal-confirm .confirm-icon {: Renderização do Resumo (dashboard) e Agenda
 //  Linhas originais: 383-610
 //  Carregar depois de core-*.js, db-indexeddb.js, sync-*.js, auth-supabase.js
-//  CORREÇÕES APLICADAS (mantendo sparkline funcional):
+//  CORREÇÕES APLICADAS:
 //    - Filtro discreto com ícone + popover flutuante (substitui barra "Período")
 //    - Persistência no localStorage
 //    - Removidas percentagens comparativas dos KPIs
 //    - Sparkline mantida com chamada externa (desenharSparkline)
+//    - Percentagem do Ticket Médio: restaurada com o estilo modal original (classe trend-up/down)
+//    - Label do período dinâmica e inteligente (exibe "Ontem" quando filtro for dia com offset 1)
 // ====================================================================
 
 // ------------------------------------------------------------
@@ -153,11 +155,14 @@ function calcularIntervaloPeriodo(tipo, offset) {
     fim = ano + '-12-31';
     label = offset === 0 ? 'Este ano' : String(ano);
   } else {
+    // tipo === 'dia'
     const d = new Date(base);
     d.setDate(d.getDate() - offset);
     const iso = formatarDataISO(d);
     inicio = fim = iso;
-    label = offset === 0 ? 'Hoje' : offset === 1 ? 'Ontem' : formatarDataCurta(iso);
+    if (offset === 0) label = 'Hoje';
+    else if (offset === 1) label = 'Ontem';
+    else label = formatarDataCurta(iso);
   }
   return { inicio, fim, label };
 }
@@ -227,7 +232,9 @@ if (typeof desenharSparkline === 'function') {
   }
 }
 
-  // Variação do ticket
+  // ============================================================
+  // PERCENTAGEM DO TICKET MÉDIO (com modal restaurado)
+  // ============================================================
   const primeiro = ultimos7Dias[0] || 0;
   const ultimo = ultimos7Dias[ultimos7Dias.length - 1] || 0;
   let variacao = 0;
@@ -240,8 +247,34 @@ if (typeof desenharSparkline === 'function') {
   if (percentEl) {
     percentEl.className = subiu ? 'trend-up' : 'trend-down';
     percentEl.innerHTML = `<span class="trend-arrow">${sinal}</span> ${Math.abs(Math.round(variacao))}%`;
+    percentEl.style.display = '';
   }
-  document.getElementById('ticket-trend-period').textContent = 'Últimos 7 dias';
+
+  // ============================================================
+  // LABEL DO PERÍODO (inteligente e interativo)
+  // ============================================================
+  let periodLabel = '';
+  if (state.dashPeriodo === 'dia') {
+    if (state.dashOffset === 0) periodLabel = 'Hoje';
+    else if (state.dashOffset === 1) periodLabel = 'Ontem';
+    else periodLabel = formatarDataCurta(intervalo.inicio);
+  } else if (state.dashPeriodo === 'semana') {
+    periodLabel = state.dashOffset === 0 ? 'Esta semana' : `Semana de ${formatarDataCurta(intervalo.inicio)}`;
+  } else if (state.dashPeriodo === '7dias') {
+    periodLabel = 'Últimos 7 dias';
+  } else if (state.dashPeriodo === 'mes') {
+    periodLabel = state.dashOffset === 0 ? 'Este mês' : 'Mês anterior';
+  } else if (state.dashPeriodo === '30dias') {
+    periodLabel = 'Últimos 30 dias';
+  } else if (state.dashPeriodo === 'ano') {
+    periodLabel = state.dashOffset === 0 ? 'Este ano' : String(intervalo.inicio.split('-')[0]);
+  } else if (state.dashPeriodo === 'custom') {
+    periodLabel = 'Personalizado';
+  } else {
+    periodLabel = 'Últimos 7 dias';
+  }
+  const trendPeriodEl = document.getElementById('ticket-trend-period');
+  if (trendPeriodEl) trendPeriodEl.textContent = periodLabel;
 
   // Próximos atendimentos
   const proximos = agPeriodo
@@ -418,18 +451,3 @@ document.querySelectorAll('.dash-periodo-opcao').forEach(btn => {
 });
 
 // Aplicar custom
-document.getElementById('dash-custom-aplicar').addEventListener('click', function(e) {
-  e.stopPropagation();
-  const ini = document.getElementById('dash-custom-inicio').value;
-  const fim = document.getElementById('dash-custom-fim').value;
-  if (!ini || !fim) { toast('Selecione as duas datas', 'error'); return; }
-  if (ini > fim) { toast('A data inicial deve ser anterior à data final', 'error'); return; }
-  state.dashPeriodo = 'custom';
-  state.dashCustomInicio = ini;
-  state.dashCustomFim = fim;
-  localStorage.setItem('bp_dash_periodo', 'custom');
-  localStorage.setItem('bp_dash_custom_inicio', ini);
-  localStorage.setItem('bp_dash_custom_fim', fim);
-  document.getElementById('modal-periodo-dashboard').classList.remove('open');
-  renderDashboard();
-});

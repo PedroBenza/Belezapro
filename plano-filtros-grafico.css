@@ -74,42 +74,122 @@
   stroke: currentColor;
 }
 
-/* ===== BOTTOM SHEET DO FILTRO (modal) ===== */
-#modal-periodo-dashboard .modal-sheet {
-  max-height: 50vh;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+/* ===== POPOVER FLUTUANTE (substitui o bottom sheet) ===== */
+#modal-periodo-dashboard.modal-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  pointer-events: none;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: none; /* controlado por JS com classe .open */
+}
+#modal-periodo-dashboard.modal-overlay.open {
+  display: flex !important;
 }
 
+#modal-periodo-dashboard .modal-sheet {
+  position: absolute;
+  top: 64px; /* alinhado abaixo do ícone de filtro */
+  left: 12px;
+  width: 260px;
+  max-width: 90vw;
+  max-height: 340px;
+  margin: 0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  background: var(--card-white);
+  padding: 16px 16px 12px;
+  pointer-events: auto;
+  animation: none !important;
+  transform: none !important;
+  overflow-y: auto;
+}
+
+#modal-periodo-dashboard .modal-sheet .handle {
+  display: none;
+}
+
+#modal-periodo-dashboard .modal-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+/* Opções em 2 colunas */
 .dash-periodo-opcoes {
-  display: flex;
-  flex-direction: column;
-  margin-top: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
 }
 .dash-periodo-opcao {
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--border-soft);
-  text-align: left;
-  padding: 13px 6px;
-  font-family: inherit;
-  font-size: .85rem;
-  font-weight: 500;
+  padding: 8px 6px;
+  font-size: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-align: center;
+  background: var(--bg-soft);
   color: var(--text-primary);
   cursor: pointer;
-}
-.dash-periodo-opcao:last-of-type {
-  border-bottom: none;
+  transition: background 0.1s, border-color 0.1s;
 }
 .dash-periodo-opcao:active {
   background: var(--bg-soft);
 }
 .dash-periodo-opcao.active {
+  border-color: var(--gold);
+  background: var(--gold-light);
   color: var(--gold-dark);
-  font-weight: 700;
+  font-weight: 600;
 }
+.dash-periodo-opcao:last-of-type {
+  border-bottom: none;
+}
+
+/* Personalizado */
 .dash-periodo-custom {
+  grid-column: span 2;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-soft);
+}
+.dash-periodo-custom .input-group {
+  margin-bottom: 0;
+}
+.dash-periodo-custom .input-field {
+  padding: 4px 6px;
+  font-size: 0.7rem;
+  min-height: 30px;
+}
+
+/* Botão "Aplicar" – redondo e ainda menor */
+#dash-custom-aplicar {
+  padding: 2px 12px;
+  font-size: 0.55rem;
+  min-height: 22px;
+  height: auto;
+  border-radius: 9999px !important;
+  width: auto;
+  align-self: flex-end;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+#dash-custom-aplicar:active {
+  opacity: 0.8;
+  transform: scale(0.96);
 }
