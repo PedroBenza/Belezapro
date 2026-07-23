@@ -8,85 +8,132 @@
 let vendaAtual = null;
 
 // ====================================================================
-//  SPARKLINE — Linha fina, sem bolhas, sem brilhos
+//  SPARKLINE — CORRIGIDA (funcional, robusta, com fallback)
 // ====================================================================
 function desenharSparkline(canvasId, dados, cor = '#D4AF37') {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const cssWidth = canvas.getBoundingClientRect().width || 84;
-  const cssHeight = canvas.getBoundingClientRect().height || 28;
-  const bufferW = Math.round(cssWidth * dpr);
-  const bufferH = Math.round(cssHeight * dpr);
-  if (canvas.width !== bufferW || canvas.height !== bufferH) {
-    canvas.width = bufferW;
-    canvas.height = bufferH;
-  }
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const width = cssWidth;
-  const height = cssHeight;
-
-  ctx.clearRect(0, 0, width, height);
-
-  if (!dados || dados.length < 2) {
-    ctx.beginPath();
-    ctx.moveTo(0, height - 4);
-    ctx.lineTo(width, height - 4);
-    ctx.strokeStyle = cor;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.15;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    return;
-  }
-
-  const min = Math.min(...dados, 0);
-  const max = Math.max(...dados, 10);
-  const range = max - min || 1;
-  const padding = 3;
-  const usableHeight = height - padding * 2;
-
-  ctx.beginPath();
-  for (let i = 0; i < dados.length; i++) {
-    const x = (i / (dados.length - 1)) * width;
-    const y = height - padding - ((dados[i] - min) / range) * usableHeight;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-
-  ctx.strokeStyle = cor;
-  ctx.lineWidth = 1.5;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.stroke();
-
-  const lastX = width;
-  const lastY = height - padding - ((dados[dados.length - 1] - min) / range) * usableHeight;
-  ctx.beginPath();
-  ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
-  ctx.fillStyle = cor;
-  ctx.fill();
-  if (dados.length >= 2) {
-    const ultimoValor = dados[dados.length - 1];
-    const penultimoValor = dados[dados.length - 2];
-    const direcao = ultimoValor >= penultimoValor ? 1 : -1;
-    const xSeta = lastX;
-    const ySeta = lastY;
-    const tamanhoSeta = 5;
-    ctx.beginPath();
-    if (direcao > 0) {
-      ctx.moveTo(xSeta - tamanhoSeta, ySeta + tamanhoSeta);
-      ctx.lineTo(xSeta, ySeta - tamanhoSeta);
-      ctx.lineTo(xSeta + tamanhoSeta, ySeta + tamanhoSeta);
-    } else {
-      ctx.moveTo(xSeta - tamanhoSeta, ySeta - tamanhoSeta);
-      ctx.lineTo(xSeta, ySeta + tamanhoSeta);
-      ctx.lineTo(xSeta + tamanhoSeta, ySeta - tamanhoSeta);
+  try {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+      // Fallback: se o canvas não existir, cria um temporário
+      console.warn('[Sparkline] Canvas não encontrado:', canvasId);
+      return;
     }
-    ctx.closePath();
+
+    // Se o canvas não estiver visível (display:none), força um tamanho mínimo
+    const rect = canvas.getBoundingClientRect();
+    const cssWidth = rect.width || 84;
+    const cssHeight = rect.height || 28;
+    
+    // Redimensionar com devicePixelRatio
+    const dpr = window.devicePixelRatio || 1;
+    const bufferW = Math.round(cssWidth * dpr);
+    const bufferH = Math.round(cssHeight * dpr);
+    
+    if (canvas.width !== bufferW || canvas.height !== bufferH) {
+      canvas.width = bufferW;
+      canvas.height = bufferH;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const width = cssWidth;
+    const height = cssHeight;
+
+    ctx.clearRect(0, 0, width, height);
+
+    // Se não há dados válidos
+    if (!dados || !Array.isArray(dados) || dados.length < 2) {
+      ctx.beginPath();
+      ctx.moveTo(0, height - 4);
+      ctx.lineTo(width, height - 4);
+      ctx.strokeStyle = cor;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.15;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#5C564E';
+      ctx.font = '6px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Sem dados', width/2, height - 2);
+      return;
+    }
+
+    // Verifica se todos os valores são zero
+    const todosZero = dados.every(v => v === 0);
+    if (todosZero) {
+      ctx.beginPath();
+      ctx.moveTo(0, height - 4);
+      ctx.lineTo(width, height - 4);
+      ctx.strokeStyle = cor;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.25;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = cor;
+      ctx.font = '6px Inter';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('0 Kz', width - 2, height - 2);
+      return;
+    }
+
+    const min = Math.min(...dados, 0);
+    const max = Math.max(...dados, 10);
+    const range = max - min || 1;
+    const padding = 3;
+    const usableHeight = height - padding * 2;
+
+    // Linha
+    ctx.beginPath();
+    for (let i = 0; i < dados.length; i++) {
+      const x = (i / (dados.length - 1)) * width;
+      const y = height - padding - ((dados[i] - min) / range) * usableHeight;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+
+    ctx.strokeStyle = cor;
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Ponto final
+    const lastX = width;
+    const lastY = height - padding - ((dados[dados.length - 1] - min) / range) * usableHeight;
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
     ctx.fillStyle = cor;
     ctx.fill();
+
+    // Seta
+    if (dados.length >= 2) {
+      const ultimoValor = dados[dados.length - 1];
+      const penultimoValor = dados[dados.length - 2];
+      const direcao = ultimoValor >= penultimoValor ? 1 : -1;
+      const xSeta = lastX;
+      const ySeta = lastY;
+      const tamanhoSeta = 5;
+      ctx.beginPath();
+      if (direcao > 0) {
+        ctx.moveTo(xSeta - tamanhoSeta, ySeta + tamanhoSeta);
+        ctx.lineTo(xSeta, ySeta - tamanhoSeta);
+        ctx.lineTo(xSeta + tamanhoSeta, ySeta + tamanhoSeta);
+      } else {
+        ctx.moveTo(xSeta - tamanhoSeta, ySeta - tamanhoSeta);
+        ctx.lineTo(xSeta, ySeta + tamanhoSeta);
+        ctx.lineTo(xSeta + tamanhoSeta, ySeta - tamanhoSeta);
+      }
+      ctx.closePath();
+      ctx.fillStyle = cor;
+      ctx.fill();
+    }
+  } catch (e) {
+    // Fallback silencioso: se algo falhar, a sparkline não quebra a UI
+    console.warn('[Sparkline] Erro ao desenhar:', e);
   }
 }
 
@@ -250,7 +297,6 @@ function removeItemFromCart(idx) {
 function addToCart(nome, valor) {
   const existingIndex = cartItems.findIndex(item => item.nome === nome);
   if (existingIndex !== -1) {
-    // Se o preço for diferente, pergunta se quer atualizar
     const existing = cartItems[existingIndex];
     if (existing.precoUnit !== valor) {
       const choice = confirm(
@@ -264,7 +310,6 @@ function addToCart(nome, valor) {
         toast('Preço atualizado!', 'success');
         return;
       } else {
-        // Adiciona como item separado com nome diferenciado
         cartItems.push({
           nome: `${nome} (${fmtKz(valor)})`,
           quantidade: 1,
@@ -276,7 +321,6 @@ function addToCart(nome, valor) {
         return;
       }
     }
-    // Mesmo preço: incrementa
     existing.quantidade += 1;
     existing.subtotal = existing.quantidade * existing.precoUnit;
     renderCart();
@@ -284,7 +328,6 @@ function addToCart(nome, valor) {
     return;
   }
 
-  // Novo item
   cartItems.push({
     nome,
     quantidade: 1,

@@ -8,6 +8,8 @@
 //    - POLÍTICAS FORTES: prevenção de duplicados por nome no merge e upsert
 //    - Verificação de existência antes de upsert
 //    - Logs estruturados para auditoria
+//    - CORREÇÃO CRÍTICA: eliminações propagadas entre dispositivos
+//      (item local sem upsert pendente não é reintroduzido)
 // ====================================================================
 
 // ====================================================================
@@ -83,7 +85,6 @@ async function supabaseUpsert(tabela, item) {
   } catch (err) {
     if (err.message === 'SESSION_EXPIRED') throw err;
     if (err.message === 'DUPLICADO_BLOQUEADO') {
-      // Não relançar para não ir para a fila de retry; apenas notificar
       console.warn(`[sync-rest] Upsert ignorado para ${tabela} devido a duplicado.`);
       return;
     }
@@ -361,19 +362,12 @@ async function carregarDoSupabase() {
       // ================================================================
       // CORREÇÃO CRÍTICA (eliminações não propagavam entre dispositivos):
       // um item que existe só localmente pode significar duas coisas muito
-      // diferentes:
-      //   a) foi criado/editado neste dispositivo e ainda não chegou ao
-      //      servidor (está na fila de upsert) → deve ser preservado;
-      //   b) já existiu no servidor mas foi eliminado (por este ou por
-      //      OUTRO dispositivo) → não deve ser preservado.
-      // O código anterior tratava sempre como (a), porque assumia que
-      // "existe local, não existe remoto" só podia significar "ainda não
-      // sincronizado". Isso fazia clientes/profissionais eliminados
-      // reaparecerem em qualquer dispositivo que não tivesse sido o autor
-      // da eliminação (a lista negra e a fila de delete são por
-      // dispositivo, nunca chegam a existir no dispositivo B). A única
-      // forma segura de saber que (a) é o caso é este item estar
-      // efetivamente pendente de upsert NESTE dispositivo.
+      // diferentes: a) criado/editado aqui e ainda não chegou ao servidor
+      // (está na fila de upsert) → preservar; b) já existiu no servidor
+      // mas foi eliminado (por este ou por outro dispositivo) → não
+      // preservar. Sem isto, a lista negra/fila de delete (que são por
+      // dispositivo) nunca chegavam ao dispositivo B, e o item eliminado
+      // era sempre reintroduzido.
       // ================================================================
       const idsComUpsertPendente = new Set(
         getSyncQueue()
@@ -425,7 +419,6 @@ async function carregarDoSupabase() {
           const idExistente = nomesExistentes.get(chave);
           // Se já existe um item com o mesmo nome e é diferente do atual, ignorar o remoto
           if (idExistente && idExistente !== remoto.id) {
-            // console.warn(`[mergeTable] Ignorando ${tabela} remoto "${remoto.nome}" porque já existe localmente com ID ${idExistente}`);
             continue;
           }
           // Registrar este nome para futuras iterações
@@ -455,10 +448,10 @@ async function carregarDoSupabase() {
       // Itens locais que não existem no remoto
       for (const [id, local] of mapLocal) {
         // CORREÇÃO CRÍTICA: só preservar como "criação local pendente" se
-        // este dispositivo tiver mesmo uma operação de upsert em fila para
-        // este id. Caso contrário — incluindo quando este id está na lista
-        // negra ou na fila de delete deste dispositivo — o item deixou de
-        // existir no servidor e NÃO deve ser reintroduzido.
+        // houver mesmo uma operação de upsert em fila para este id neste
+        // dispositivo. Caso contrário (lista negra, fila de delete, ou
+        // simplesmente ausência de qualquer operação pendente) o item
+        // deixou de existir no servidor e não deve ser reintroduzido.
         if (deletedIds.has(id) || idsComDeletePendente.has(id) || !idsComUpsertPendente.has(id)) {
           continue;
         }

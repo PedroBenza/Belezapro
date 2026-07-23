@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#D4AF37">
   <title>BeautyPro — Gestão de Salão</title>
 
-  <!-- CSP (Content Security Policy) -->
+  <!-- CSP -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://js-de.sentry-cdn.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://xbudnftutemakjbgxayf.supabase.co;">
 
   <!-- PWA -->
@@ -19,10 +19,7 @@
   <meta name="apple-mobile-web-app-title" content="BeautyPro">
 
   <!-- Sentry -->
-  <script
-    src="https://js-de.sentry-cdn.com/3036c354ac820ced1c3ea8a8c8737481.min.js"
-    crossorigin="anonymous"
-  ></script>
+  <script src="https://js-de.sentry-cdn.com/3036c354ac820ced1c3ea8a8c8737481.min.js" crossorigin="anonymous"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -118,98 +115,111 @@
 
       <!-- HEADER -->
       <header class="app-header">
-  <div class="app-header-inner">
-    <div style="display:flex;flex-direction:column;gap:3px;padding-right:44px;">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <div class="logo" style="flex-shrink:0;display:flex;align-items:center;gap:6px;">
-          <img src="logo.png" alt="BeautyPro" style="height:24px;width:auto;">
-          Beauty<span>Pro</span>
+        <div class="app-header-inner">
+          <div style="display:flex;flex-direction:column;gap:3px;padding-right:44px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="logo" style="flex-shrink:0;display:flex;align-items:center;gap:6px;">
+                <img src="logo.png" alt="BeautyPro" style="height:24px;width:auto;">
+                Beauty<span>Pro</span>
+              </div>
+              <div class="store-name" id="store-name-display" title="Duplo clique para gerir profissionais" style="max-width:38vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Carregando...</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="plano-badge" id="plano-badge" style="flex-shrink:0;">TRIAL</span>
+              <span class="trial-countdown" id="trial-countdown" style="display:none;flex-shrink:0;"></span>
+            </div>
+          </div>
+          <div class="header-actions" style="position:absolute;top:8px;right:8px;">
+            <div style="position:relative;">
+              <button id="menu-btn" title="Menu" aria-label="Menu" aria-haspopup="true" aria-expanded="false" style="width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:6px;color:var(--text-secondary);cursor:pointer;transition:background .15s ease;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              </button>
+              <div id="menu-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card, #fff);border-radius:var(--radius-sm,8px);box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:140px;overflow:hidden;z-index:50;">
+                <button id="logout-btn" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:none;border:none;font-size:.85rem;color:var(--text-primary,#333);cursor:pointer;text-align:left;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Sair
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="store-name" id="store-name-display" title="Duplo clique para gerir profissionais" style="max-width:38vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Carregando...</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="plano-badge" id="plano-badge" style="flex-shrink:0;">TRIAL</span>
-        <span class="trial-countdown" id="trial-countdown" style="display:none;flex-shrink:0;"></span>
-      </div>
-    </div>
-    <div class="header-actions" style="position:absolute;top:8px;right:8px;">
-      <div style="position:relative;">
-        <button id="menu-btn" title="Menu" aria-label="Menu" aria-haspopup="true" aria-expanded="false" style="width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:6px;color:var(--text-secondary);cursor:pointer;transition:background .15s ease;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <div id="menu-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card, #fff);border-radius:var(--radius-sm,8px);box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:140px;overflow:hidden;z-index:50;">
-          <button id="logout-btn" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:none;border:none;font-size:.85rem;color:var(--text-primary,#333);cursor:pointer;text-align:left;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sair
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="offline-banner" id="offline-banner"><span>📡</span> Modo offline — todas as funcionalidades disponíveis</div>
+      </header>
 
-      <!-- CTA VENDA — BRANDING -->
-<button class="venda-cta-bar" id="nova-venda-hero-btn" aria-label="Registar nova venda">
-  <div class="cta-icon">+</div>
-  <div class="cta-text">
-    <div class="cta-main">
-      Registar <span class="gold-word">Venda</span>
-    </div>
-    <div class="cta-sub">Toque para iniciar uma nova venda agora</div>
-  </div>
-  <span class="cta-arrow visible">→</span>
-</button>
+      <div class="offline-banner" id="offline-banner"><span>📡</span> Modo offline — todas as funcionalidades disponíveis</div><!-- CTA VENDA -->
+      <button class="venda-cta-bar" id="nova-venda-hero-btn" aria-label="Registar nova venda">
+        <div class="cta-icon">+</div>
+        <div class="cta-text">
+          <div class="cta-main">Registar <span class="gold-word">Venda</span></div>
+          <div class="cta-sub">Toque para iniciar uma nova venda agora</div>
+        </div>
+        <span class="cta-arrow visible">→</span>
+      </button>
+
       <!-- ===== MAIN CONTENT ===== -->
       <main class="main-content">
 
         <!-- DASHBOARD -->
         <div id="tab-dashboard" class="tab-pane active">
           <div class="tab-inner">
+            <!-- Data + Ícone de Filtro -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <span style="font-size:.8rem;font-weight:600;color:var(--text-secondary);" id="today-date"></span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button id="dash-filter-icon" style="background:none;border:none;padding:2px;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;transition:color 0.15s;" aria-label="Filtrar período">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <line x1="4" y1="6" x2="20" y2="6"/>
+                    <line x1="6" y1="12" x2="18" y2="12"/>
+                    <line x1="8" y1="18" x2="16" y2="18"/>
+                  </svg>
+                </button>
+                <span style="font-size:.8rem;font-weight:600;color:var(--text-secondary);" id="today-date">Hoje</span>
+              </div>
               <span style="font-size:.7rem;color:var(--text-muted);" id="greeting">Bom dia!</span>
             </div>
+
+            <!-- KPIs -->
             <div class="kpi-grid">
-  <!-- Card 1: Faturamento -->
-  <div class="kpi-card gold-accent" id="kpi-revenue-card" data-role="admin,gerente">
-    <div class="kpi-label">Faturamento Hoje</div>
-    <div class="kpi-value" style="color:var(--gold-dark);" id="kpi-revenue">0 Kz</div>
-    <div class="kpi-sub" id="kpi-revenue-count">0 serviços</div>
-  </div>
+              <!-- Card 1: Faturamento -->
+              <div class="kpi-card gold-accent" id="kpi-revenue-card" data-role="admin,gerente">
+                <div class="kpi-label">Faturamento</div>
+                <div class="kpi-value" style="color:var(--gold-dark);" id="kpi-revenue">0 Kz</div>
+                <div class="kpi-sub" id="kpi-revenue-count">0 serviços</div>
+              </div>
 
-  <!-- Card 2: Agendamentos -->
-  <div class="kpi-card green-accent" id="kpi-agenda-card">
-    <div class="kpi-label">Agendamentos</div>
-    <div class="kpi-value" id="kpi-agendamentos">0</div>
-    <div class="kpi-sub" id="kpi-agendamentos-status">0 realizados</div>
-  </div>
+              <!-- Card 2: Agendamentos -->
+              <div class="kpi-card green-accent" id="kpi-agenda-card">
+                <div class="kpi-label">Agendamentos</div>
+                <div class="kpi-value" id="kpi-agendamentos">0</div>
+                <div class="kpi-sub" id="kpi-agendamentos-status">0 realizados</div>
+              </div>
 
-  <!-- Card 3: Ticket Médio com Sparkline (REFINADO) -->
-<div class="kpi-card" style="grid-column: span 2; padding: 14px 20px;">
-  <div class="kpi-main-content">
-    <div class="kpi-left">
-      <div class="kpi-label">Ticket Médio</div>
-      <div class="kpi-value" id="kpi-ticket">0 Kz</div>
-      <div class="kpi-sub" id="kpi-ticket-sub">por cliente</div>
-    </div>
-    <div class="kpi-right">
-      <div class="sparkline-wrapper">
-        <canvas id="ticket-sparkline" width="84" height="28"></canvas>
-      </div>
-      <div class="kpi-trend">
-        <span class="trend-up" id="ticket-trend-percent">—</span>
-        <span class="trend-period" id="ticket-trend-period">Últimos 7 dias</span>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
+              <!-- Card 3: Ticket Médio -->
+              <div class="kpi-card" style="grid-column: span 2; padding: 14px 20px;">
+                <div class="kpi-main-content">
+                  <div class="kpi-left">
+                    <div class="kpi-label">Ticket Médio</div>
+                    <div class="kpi-value" id="kpi-ticket">0 Kz</div>
+                    <div class="kpi-sub" id="kpi-ticket-sub">por cliente</div>
+                  </div>
+                  <div class="kpi-right">
+                    <div class="sparkline-wrapper">
+                      <canvas id="ticket-sparkline" width="84" height="28"></canvas>
+                    </div>
+                    <div class="kpi-trend">
+                      <span class="trend-up" id="ticket-trend-percent">—</span>
+                      <span class="trend-period" id="ticket-trend-period">Últimos 7 dias</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Próximos Atendimentos -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <span class="section-title">Próximos Atendimentos</span>
               <span style="font-size:.7rem;color:var(--text-muted);" id="agenda-count">0 pendentes</span>
             </div>
             <div id="agenda-today-list"></div>
+
             <!-- GRÁFICO -->
             <div class="card mt-3" style="padding:16px;position:relative;" data-role="admin,gerente">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
@@ -238,16 +248,17 @@
             </div>
           </div>
         </div>
+
         <!-- AGENDA -->
         <div id="tab-agenda" class="tab-pane">
           <div class="tab-inner">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;">Agenda</span>
               <div style="display:flex;gap:8px;align-items:center;">
-  <button id="agenda-prev" style="background:none;border:none;font-size:1.2rem;color:var(--text-muted);cursor:pointer;padding:4px 8px;transition:color 0.15s ease;">◀</button>
-  <span style="font-weight:600;font-size:.85rem;color:var(--text-primary);" id="agenda-date-label">Hoje</span>
-  <button id="agenda-next" style="background:none;border:none;font-size:1.2rem;color:var(--text-muted);cursor:pointer;padding:4px 8px;transition:color 0.15s ease;">▶</button>
-</div>
+                <button id="agenda-prev" style="background:none;border:none;font-size:1.2rem;color:var(--text-muted);cursor:pointer;padding:4px 8px;transition:color 0.15s ease;">◀</button>
+                <span style="font-weight:600;font-size:.85rem;color:var(--text-primary);" id="agenda-date-label">Hoje</span>
+                <button id="agenda-next" style="background:none;border:none;font-size:1.2rem;color:var(--text-muted);cursor:pointer;padding:4px 8px;transition:color 0.15s ease;">▶</button>
+              </div>
             </div>
             <div id="agenda-full-list"></div>
           </div>
@@ -273,54 +284,53 @@
         </div>
 
         <!-- CAIXA -->
-<div id="tab-caixa" class="tab-pane">
-  <div class="tab-inner">
-    <div class="card card-highlight mb-3">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);">Saldo Disponível</span>
-        <span style="font-size:.6rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-          Fundo: <span id="caixa-fundo" style="font-weight:700;color:var(--gold-dark);">0 Kz</span>
-        </span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 12px;">
-        <span id="caixa-saldo">0 Kz</span>
-        <div style="text-align:right;">
-          <div id="caixa-variacao">↑ 0%</div>
-          <div class="caixa-variacao-sub">Comparado com ontem</div>
+        <div id="tab-caixa" class="tab-pane">
+          <div class="tab-inner">
+            <div class="card card-highlight mb-3">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);">Saldo Disponível</span>
+                <span style="font-size:.6rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  Fundo: <span id="caixa-fundo" style="font-weight:700;color:var(--gold-dark);">0 Kz</span>
+                </span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 12px;">
+                <span id="caixa-saldo">0 Kz</span>
+                <div style="text-align:right;">
+                  <div id="caixa-variacao">↑ 0%</div>
+                  <div class="caixa-variacao-sub">Comparado com ontem</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                <button class="caixa-acao" id="add-despesa-btn" data-role="admin,gerente" data-role-mode="disable">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                  <span>Despesa</span>
+                </button>
+                <button class="caixa-acao" id="ajustar-fundo-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  <span>Fundo</span>
+                </button>
+                <button class="caixa-acao" id="fecho-caixa-btn" data-role="admin" data-role-mode="disable">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <span>Fecho</span>
+                </button>
+              </div>
+            </div>
+            <div class="hist-filter" id="hist-filter">
+              <button class="hist-chip active" data-periodo="hoje">Hoje</button>
+              <button class="hist-chip" data-periodo="7dias">7 dias</button>
+              <button class="hist-chip" data-periodo="30dias">30 dias</button>
+              <button class="hist-chip" data-periodo="mes">Este mês</button>
+              <button class="hist-chip" data-periodo="tudo">Tudo</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;" id="hist-titulo">Movimentos de Hoje</span>
+              <span style="font-size:.7rem;color:var(--text-muted);">Toque para detalhes</span>
+            </div>
+            <div id="movimentos-list"></div>
+          </div>
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-        <button class="caixa-acao" id="add-despesa-btn" data-role="admin,gerente" data-role-mode="disable">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          <span>Despesa</span>
-        </button>
-        <button class="caixa-acao" id="ajustar-fundo-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-          <span>Fundo</span>
-        </button>
-        <button class="caixa-acao" id="fecho-caixa-btn" data-role="admin" data-role-mode="disable">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span>Fecho</span>
-        </button>
-      </div>
-    </div>
-    <div class="hist-filter" id="hist-filter">
-      <button class="hist-chip active" data-periodo="hoje">Hoje</button>
-      <button class="hist-chip" data-periodo="7dias">7 dias</button>
-      <button class="hist-chip" data-periodo="30dias">30 dias</button>
-      <button class="hist-chip" data-periodo="mes">Este mês</button>
-      <button class="hist-chip" data-periodo="tudo">Tudo</button>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <span style="font-family:var(--font-serif);font-size:1.05rem;font-weight:600;" id="hist-titulo">Movimentos de Hoje</span>
-      <span style="font-size:.7rem;color:var(--text-muted);">Toque para detalhes</span>
-    </div>
-    <div id="movimentos-list"></div>
-  </div>
-</div>
-
-        <!-- EQUIPA -->
+<!-- EQUIPA -->
         <div id="tab-equipa" class="tab-pane" data-role="admin,gerente">
           <div class="tab-inner">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -357,51 +367,52 @@
             </div>
 
             <div class="ia-resumo-grid">
-  <div class="ia-resumo-card">
-    <div class="ia-resumo-header">
-      <div class="ia-resumo-icone" style="color:var(--gold-dark);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="1 18 8.5 10.5 13.5 15.5 23 6"/>
-          <polyline points="17 6 23 6 23 12"/>
-        </svg>
-      </div>
-      <div class="ia-resumo-label">Faturado/hoje</div>
-    </div>
-    <div class="ia-resumo-valor" id="ia-resumo-fat">0 Kz</div>
-    <div class="ia-resumo-sub" id="ia-resumo-fat-trend">—</div>
-  </div>
+              <div class="ia-resumo-card">
+                <div class="ia-resumo-header">
+                  <div class="ia-resumo-icone" style="color:var(--gold-dark);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="1 18 8.5 10.5 13.5 15.5 23 6"/>
+                      <polyline points="17 6 23 6 23 12"/>
+                    </svg>
+                  </div>
+                  <div class="ia-resumo-label">Faturado/hoje</div>
+                </div>
+                <div class="ia-resumo-valor" id="ia-resumo-fat">0 Kz</div>
+                <div class="ia-resumo-sub" id="ia-resumo-fat-trend">—</div>
+              </div>
 
-  <div class="ia-resumo-card">
-    <div class="ia-resumo-header">
-      <div class="ia-resumo-icone" style="color:var(--gold-dark);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      </div>
-      <div class="ia-resumo-label">Clientes</div>
-    </div>
-    <div class="ia-resumo-valor" id="ia-resumo-clientes">0</div>
-    <div class="ia-resumo-sub" id="ia-resumo-clientes-sub">—</div>
-  </div>
+              <div class="ia-resumo-card">
+                <div class="ia-resumo-header">
+                  <div class="ia-resumo-icone" style="color:var(--gold-dark);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </div>
+                  <div class="ia-resumo-label">Clientes</div>
+                </div>
+                <div class="ia-resumo-valor" id="ia-resumo-clientes">0</div>
+                <div class="ia-resumo-sub" id="ia-resumo-clientes-sub">—</div>
+              </div>
 
-  <div class="ia-resumo-card">
-    <div class="ia-resumo-header">
-      <div class="ia-resumo-icone" style="color:var(--gold-dark);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-      </div>
-      <div class="ia-resumo-label">Agendamentos</div>
-    </div>
-    <div class="ia-resumo-valor" id="ia-resumo-ag">0</div>
-    <div class="ia-resumo-sub" id="ia-resumo-ag-sub">—</div>
-  </div>
-</div>
+              <div class="ia-resumo-card">
+                <div class="ia-resumo-header">
+                  <div class="ia-resumo-icone" style="color:var(--gold-dark);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </div>
+                  <div class="ia-resumo-label">Agendamentos</div>
+                </div>
+                <div class="ia-resumo-valor" id="ia-resumo-ag">0</div>
+                <div class="ia-resumo-sub" id="ia-resumo-ag-sub">—</div>
+              </div>
+            </div>
+
             <div class="card" style="padding:16px;position:relative;">
               <div id="ia-onboarding" style="display:none;text-align:center;padding:8px 4px 4px;">
                 <div style="font-size:1.8rem;margin-bottom:8px;">👋</div>
@@ -481,7 +492,6 @@
           </div>
         </div>
 
-
       </main>
 
       <button class="fab" id="fab-agendar" aria-label="Novo agendamento">+</button>
@@ -520,7 +530,34 @@
 
   <!-- ===== MODAIS ===== -->
 
-  <!-- AGENDAMENTO -->
+  <!-- MODAL PERÍODO DASHBOARD (Bottom Sheet) -->
+  <div id="modal-periodo-dashboard" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="periodo-dashboard-title">
+    <div class="modal-sheet" style="max-height:50vh;border-radius:var(--radius-md) var(--radius-md) 0 0;">
+      <div class="handle"></div>
+      <div id="periodo-dashboard-title" class="modal-title">Período</div>
+      <div class="dash-periodo-opcoes" id="dash-periodo-opcoes">
+        <button class="dash-periodo-opcao" type="button" data-periodo="dia" data-offset="0">Hoje</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="dia" data-offset="1">Ontem</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="semana" data-offset="0">Esta semana</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="7dias" data-offset="0">Últimos 7 dias</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="mes" data-offset="0">Este mês</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="30dias" data-offset="0">Últimos 30 dias</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="ano" data-offset="0">Este ano</button>
+        <button class="dash-periodo-opcao" type="button" data-periodo="custom">Personalizado</button>
+      </div>
+      <div class="dash-periodo-custom" id="dash-periodo-custom" style="display:none;">
+        <div class="input-group">
+          <label class="input-label">De</label>
+          <input type="date" class="input-field" id="dash-custom-inicio">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Até</label>
+          <input type="date" class="input-field" id="dash-custom-fim">
+        </div>
+        <button class="btn btn-primary" id="dash-custom-aplicar" type="button" style="width:100%;">Aplicar</button>
+      </div>
+    </div>
+  </div><!-- AGENDAMENTO -->
   <div id="modal-agenda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="agenda-title">
     <div class="modal-sheet">
       <div class="handle"></div>
@@ -616,127 +653,110 @@
       </div>
     </div>
   </div>
-<!-- VENDA (ORDEM: Cliente → Serviço + Valor fixo → Profissional → Adicionar) -->
-<div id="modal-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="venda-title">
-  <div class="modal-sheet">
-    <div class="handle"></div>
-    <div id="venda-title" class="modal-title">💰 Nova Venda</div>
+  <!-- VENDA -->
+  <div id="modal-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="venda-title">
+    <div class="modal-sheet">
+      <div class="handle"></div>
+      <div id="venda-title" class="modal-title">💰 Nova Venda</div>
 
-    <!-- 1. CLIENTE -->
-    <div class="input-group">
-      <label class="input-label">Cliente</label>
-      <select id="venda-cliente" class="input-field"></select>
-      <button class="btn btn-sm btn-secondary mt-2" id="venda-add-cliente-rapido" style="width:100%;">+ Cliente rápido</button>
-    </div>
+      <div class="input-group">
+        <label class="input-label">Cliente</label>
+        <select id="venda-cliente" class="input-field"></select>
+        <button class="btn btn-sm btn-secondary mt-2" id="venda-add-cliente-rapido" style="width:100%;">+ Cliente rápido</button>
+      </div>
 
-<!-- 2. ADICIONAR SERVIÇO (Serviço + Valor na mesma linha) -->
-<div style="background:var(--bg-soft);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
-  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:8px;">Adicionar Serviço / Produto</div>
+      <div style="background:var(--bg-soft);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:8px;">Adicionar Serviço / Produto</div>
+        <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;">
+          <div style="flex:1;min-width:0;">
+            <select id="ci-servico-sel" class="input-field" style="width:100%;padding:10px 12px;font-size:.85rem;">
+              <option value="">Selecionar serviço</option>
+            </select>
+          </div>
+          <div style="flex-shrink:0;text-align:center;width:100px;">
+            <div style="font-size:.55rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">Valor fixo</div>
+            <div style="display:flex;align-items:center;background:var(--card-white);border:1.5px solid var(--border-soft);border-radius:var(--radius-md);padding:0 4px;justify-content:center;">
+              <input type="number" id="ci-valor" class="input-field" placeholder="0" style="border:none;background:transparent;padding:8px 0;text-align:center;font-weight:700;color:var(--green);font-size:.85rem;width:55px;" min="0" step="500">
+              <span style="font-weight:700;color:var(--gold-dark);font-size:.85rem;margin-left:1px;">Kz</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <label class="input-label" style="font-size:.6rem;">Profissional</label>
+          <select id="venda-profissional" class="input-field" style="width:100%;padding:10px 12px;font-size:.85rem;">
+            <option value="">Selecionar profissional</option>
+          </select>
+        </div>
+        <button class="btn btn-success btn-block btn-sm" id="btn-add-item">+ Adicionar ao carrinho</button>
+      </div>
 
-  <!-- Linha: Serviço (esquerda) + Valor fixo (direita, compacto) -->
-  <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;">
-    <!-- Select de serviço (ocupa o espaço restante) -->
-    <div style="flex:1;min-width:0;">
-      <select id="ci-servico-sel" class="input-field" style="width:100%;padding:10px 12px;font-size:.85rem;">
-        <option value="">Selecionar serviço</option>
-      </select>
-    </div>
-    <!-- Valor fixo (compacto, centralizado) -->
-    <div style="flex-shrink:0;text-align:center;width:100px;">
-      <div style="font-size:.55rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">Valor fixo</div>
-      <div style="display:flex;align-items:center;background:var(--card-white);border:1.5px solid var(--border-soft);border-radius:var(--radius-md);padding:0 4px;justify-content:center;">
-        <input type="number" id="ci-valor" class="input-field" placeholder="0" style="border:none;background:transparent;padding:8px 0;text-align:center;font-weight:700;color:var(--green);font-size:.85rem;width:55px;" min="0" step="500">
-        <span style="font-weight:700;color:var(--gold-dark);font-size:.85rem;margin-left:1px;">Kz</span>
+      <div id="cart-items-list"></div>
+      <div id="cart-total-area"></div>
+
+      <div class="input-group mt-3">
+        <label class="input-label">Forma de Pagamento</label>
+        <select id="venda-pagamento" class="input-field">
+          <option value="Numerário">💵 Numerário</option>
+          <option value="Multicaixa Express">📱 Multicaixa Express</option>
+          <option value="Transferência Bancária">🏦 Transferência Bancária</option>
+          <option value="Cartão">💳 Cartão</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:12px;">
+        <button class="btn btn-secondary btn-sm" style="flex:1;font-size:0.9rem;padding:10px 0;" id="modal-venda-cancel">Cancelar</button>
+        <button class="btn btn-success btn-sm" style="flex:1;font-size:0.9rem;padding:10px 0;" id="modal-venda-save">Confirmar Venda</button>
       </div>
     </div>
   </div>
 
-  <!-- PROFISSIONAL (por baixo) -->
-  <div style="margin-bottom:8px;">
-    <label class="input-label" style="font-size:.6rem;">Profissional</label>
-    <select id="venda-profissional" class="input-field" style="width:100%;padding:10px 12px;font-size:.85rem;">
-      <option value="">Selecionar profissional</option>
-    </select>
-  </div>
-
-  <!-- Botão adicionar -->
-  <button class="btn btn-success btn-block btn-sm" id="btn-add-item">+ Adicionar ao carrinho</button>
-</div>
-    <!-- 3. CARRINHO -->
-    <div id="cart-items-list"></div>
-    <div id="cart-total-area"></div>
-
-    <!-- 4. FORMA DE PAGAMENTO -->
-    <div class="input-group mt-3">
-      <label class="input-label">Forma de Pagamento</label>
-      <select id="venda-pagamento" class="input-field">
-        <option value="Numerário">💵 Numerário</option>
-        <option value="Multicaixa Express">📱 Multicaixa Express</option>
-        <option value="Transferência Bancária">🏦 Transferência Bancária</option>
-        <option value="Cartão">💳 Cartão</option>
-        <option value="Outro">Outro</option>
-      </select>
-    </div>
-
-    <!-- 5. BOTÕES FINAIS -->
-    <div style="display:flex;gap:12px;margin-top:12px;">
-      <button class="btn btn-secondary btn-sm" style="flex:1;font-size:0.9rem;padding:10px 0;" id="modal-venda-cancel">Cancelar</button>
-      <button class="btn btn-success btn-sm" style="flex:1;font-size:0.9rem;padding:10px 0;" id="modal-venda-save">Confirmar Venda</button>
+  <!-- FUNDO -->
+  <div id="modal-fundo" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fundo-title">
+    <div class="modal-sheet">
+      <div class="handle"></div>
+      <div id="fundo-title" class="modal-title">Fundo de Maneio</div>
+      <div class="input-group">
+        <label class="input-label">Novo Fundo (Kz)</label>
+        <input type="number" id="fundo-valor" class="input-field" placeholder="0" min="0" step="1000">
+      </div>
+      <div style="display:flex;gap:12px;margin-top:12px;">
+        <button class="btn btn-secondary" style="flex:1;" id="modal-fundo-cancel">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2;" id="modal-fundo-save">Actualizar</button>
+      </div>
     </div>
   </div>
-</div>
-<!-- FUNDO -->
-<div id="modal-fundo" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fundo-title">
-  <div class="modal-sheet">
-    <div class="handle"></div>
-    <div id="fundo-title" class="modal-title">Fundo de Maneio</div>
-    <div class="input-group">
-      <label class="input-label">Novo Fundo (Kz)</label>
-      <input type="number" id="fundo-valor" class="input-field" placeholder="0" min="0" step="1000">
-    </div>
-    <div style="display:flex;gap:12px;margin-top:12px;">
-      <button class="btn btn-secondary" style="flex:1;" id="modal-fundo-cancel">Cancelar</button>
-      <button class="btn btn-primary" style="flex:2;" id="modal-fundo-save">Actualizar</button>
-    </div>
-  </div>
-</div>
 
-<!-- DETALHE VENDA -->
-<div id="modal-detalhe-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detalhe-venda-titulo">
-  <div class="modal-sheet">
-    <div class="handle"></div>
-    <div id="detalhe-venda-titulo" class="modal-title">Detalhe da Venda</div>
-    <div id="detalhe-venda-conteudo"></div>
-    <div style="display:flex;gap:12px;margin-top:16px;">
-      <button class="btn btn-secondary" style="flex:1;" id="modal-detalhe-fechar">Fechar</button>
-      <button class="btn btn-primary" style="flex:2;" id="btn-imprimir-recibo">
-        <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><rect x="6" y="9" width="12" height="8" rx="1"/><path d="M6 9V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4"/><path d="M6 17H4a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/></svg>
-        Imprimir Recibo
-      </button>
+  <!-- DETALHE VENDA -->
+  <div id="modal-detalhe-venda" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detalhe-venda-titulo">
+    <div class="modal-sheet">
+      <div class="handle"></div>
+      <div id="detalhe-venda-titulo" class="modal-title">Detalhe da Venda</div>
+      <div id="detalhe-venda-conteudo"></div>
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <button class="btn btn-secondary" style="flex:1;" id="modal-detalhe-fechar">Fechar</button>
+        <button class="btn btn-primary" style="flex:2;" id="btn-imprimir-recibo">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><rect x="6" y="9" width="12" height="8" rx="1"/><path d="M6 9V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4"/><path d="M6 17H4a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/></svg>
+          Imprimir Recibo
+        </button>
+      </div>
     </div>
   </div>
-</div>
-<!-- FECHO CAIXA -->
-<div id="modal-fecho" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fecho-title">
-  <div class="modal-sheet">
-    <div class="handle"></div>
-    <div id="fecho-title" class="modal-title">📋 Fecho de Caixa</div>
-    <div id="fecho-conteudo"></div>
 
-    <!-- Botões redondos (pill), magros e pequenos -->
-    <div style="display:flex; gap:6px; margin-top:14px; justify-content:center; flex-wrap:wrap;">
-      <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; border:1px solid #ccc; background:#f0f0f0; color:#333; cursor:pointer;" id="modal-fecho-fechar">
-        Regressar
-      </button>
-      <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; background:#2C7A4D; color:#fff; border:none; cursor:pointer;" id="confirmar-fecho-btn">
-        Realizar fecho
-      </button>
-      <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; background:linear-gradient(135deg,#D4AF37,#A7872B); color:#fff; border:none; cursor:pointer;" id="btn-imprimir-fecho">
-        Imprimir
-      </button>
+  <!-- FECHO CAIXA -->
+  <div id="modal-fecho" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fecho-title">
+    <div class="modal-sheet">
+      <div class="handle"></div>
+      <div id="fecho-title" class="modal-title">📋 Fecho de Caixa</div>
+      <div id="fecho-conteudo"></div>
+      <div style="display:flex; gap:6px; margin-top:14px; justify-content:center; flex-wrap:wrap;">
+        <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; border:1px solid #ccc; background:#f0f0f0; color:#333; cursor:pointer;" id="modal-fecho-fechar">Regressar</button>
+        <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; background:#2C7A4D; color:#fff; border:none; cursor:pointer;" id="confirmar-fecho-btn">Realizar fecho</button>
+        <button style="flex:1; min-width:70px; max-width:110px; border-radius:9999px !important; padding:4px 12px !important; font-size:0.65rem !important; font-weight:600; background:linear-gradient(135deg,#D4AF37,#A7872B); color:#fff; border:none; cursor:pointer;" id="btn-imprimir-fecho">Imprimir</button>
+      </div>
     </div>
   </div>
-</div>
+
   <!-- PROFISSIONAL -->
   <div id="modal-prof" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="prof-modal-title">
     <div class="modal-sheet">
@@ -871,8 +891,7 @@
       <button class="btn btn-secondary btn-block mt-3" id="modal-agenda-close">Fechar</button>
     </div>
   </div>
-
-  <!-- MODAL CONFIRMAÇÃO -->
+<!-- MODAL CONFIRMAÇÃO -->
   <div id="modal-confirm" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
     <div class="modal-confirm-sheet">
       <div class="confirm-icon">⚠️</div>
@@ -898,23 +917,17 @@
     </div>
   </div>
 
-  <!-- MODAL SUCESSO VENDA (CORRIGIDO: elementos de animação adicionados) -->
+  <!-- MODAL SUCESSO VENDA -->
   <div id="modal-venda-sucesso" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="sucesso-title">
     <div class="modal-sheet modal-sheet--recibo" style="max-width:420px; padding:0; background:var(--card-white); border-radius:var(--radius-md); box-shadow:var(--shadow-strong); overflow:hidden;">
-
-      <!-- Barra de ouro no topo (acabamento premium) -->
       <div style="height:4px; background:linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light), var(--gold), var(--gold-dark));"></div>
-
       <div style="padding:22px 20px 20px;">
-        <!-- Cabeçalho: Logótipo + separador dourado -->
         <div style="text-align:center; margin-bottom:16px;">
           <div class="recibo-logo" style="font-family:'Playfair Display',var(--font-serif); font-size:1.4rem; font-weight:700; letter-spacing:-0.02em;">
             <span class="recibo-logo-gold">Beauty</span><span style="color:var(--text-primary);">Pro</span>
           </div>
           <div style="width:44px; height:1.5px; margin:6px auto 0; background:linear-gradient(90deg, transparent, var(--gold), transparent);"></div>
         </div>
-
-        <!-- Status de sucesso: check animado + valor -->
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:var(--gold-light); padding:12px 14px; border-radius:var(--radius-sm); border-left:3px solid var(--gold);">
           <div style="width:34px;height:34px;flex-shrink:0;border-radius:50%;background:var(--card-white);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(212,175,55,.25);">
             <svg viewBox="0 0 34 34" style="width:22px;height:22px;">
@@ -928,14 +941,11 @@
           </div>
           <div style="font-family:'Playfair Display',var(--font-serif); font-size:1.3rem; font-weight:700; color:var(--gold-dark); font-variant-numeric:tabular-nums;" id="sucesso-valor">0 Kz</div>
         </div>
-
-        <!-- RECIBO -->
         <div style="background:var(--bg-soft); padding:16px 14px; border-radius:var(--radius-sm); margin-bottom:16px; border:1px solid var(--border-soft); font-size:0.75rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-soft); padding-bottom:8px;">
             <span style="font-weight:600; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.06em;">Recibo de Venda</span>
             <span style="font-weight:700; font-family:var(--font-mono); font-size:0.75rem; color:var(--gold-dark);" id="detalhe-venda-id">#----</span>
           </div>
-
           <div style="display:grid; grid-template-columns:80px 1fr; gap:4px 12px; margin-bottom:10px; font-size:0.7rem;">
             <span style="font-weight:600; color:var(--text-secondary);">Cliente</span>
             <span style="font-weight:500; color:var(--text-primary);" id="detalhe-venda-cliente">Anónimo</span>
@@ -946,25 +956,19 @@
             <span style="font-weight:600; color:var(--text-secondary);">Pagamento</span>
             <span style="font-weight:500; color:var(--text-primary);" id="detalhe-venda-pagamento">💵 Numerário</span>
           </div>
-
           <div style="border-top:1px dashed var(--border-soft); margin:6px 0 8px;"></div>
-
           <div style="display:grid; grid-template-columns:1fr 36px 48px 56px; gap:4px; font-weight:600; font-size:0.6rem; text-transform:uppercase; color:var(--text-secondary); letter-spacing:0.06em; padding-bottom:4px; border-bottom:1px solid var(--border-soft);">
             <span>Descrição</span>
             <span style="text-align:center;">Qtd</span>
             <span style="text-align:right;">P.Unit</span>
             <span style="text-align:right;">Total</span>
           </div>
-
           <div id="detalhe-venda-itens" style="margin-top:4px;"></div>
-
           <div style="border-top:2px solid var(--gold); margin:8px 0 0; padding-top:6px; display:flex; justify-content:space-between; align-items:baseline; font-weight:700; font-size:0.9rem;">
             <span style="color:var(--text-secondary); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em;">Total</span>
             <span style="font-family:'Playfair Display',var(--font-serif); color:var(--gold-dark); font-variant-numeric:tabular-nums;" id="detalhe-venda-total">0 Kz</span>
           </div>
         </div>
-
-        <!-- Botões -->
         <div style="display:flex; gap:10px; width:100%;">
           <button class="btn btn-secondary" id="btn-imprimir-sucesso" style="flex:1; padding:10px 0; font-size:0.75rem; border-color:var(--border-soft);">
             <span style="margin-right:4px;">🖨️</span> Imprimir

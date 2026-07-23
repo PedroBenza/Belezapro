@@ -8,7 +8,7 @@ let state = {
   movimentos: [],
   profissionais: [],
   servicos: [],
-  fechos_caixa: [],   // ← ADICIONADO
+  fechos_caixa: [],
   agendaDataAtual: hoje(),
   histPeriodo: 'hoje',
   carrinho: [],
@@ -16,6 +16,17 @@ let state = {
   chartPeriodo: 'semana',
   chartOffset: 0,
   chartMostrarValores: false,
+  
+  // ============================================================
+  //  FILTRO DO DASHBOARD (discreto, via ícone + Bottom Sheet)
+  //  - dashPeriodo: 'dia', 'semana', '7dias', 'mes', '30dias', 'ano', 'custom'
+  //  - dashOffset: deslocamento para trás (0 = atual, 1 = anterior, etc.)
+  //  - dashCustomInicio/Fim: datas personalizadas (YYYY-MM-DD)
+  // ============================================================
+  dashPeriodo: localStorage.getItem('bp_dash_periodo') || 'dia',
+  dashOffset: parseInt(localStorage.getItem('bp_dash_offset')) || 0,
+  dashCustomInicio: localStorage.getItem('bp_dash_custom_inicio') || null,
+  dashCustomFim: localStorage.getItem('bp_dash_custom_fim') || null,
 };
 
 // ✅ Ponto 4 — restaura a última aba visitada neste dispositivo; a troca

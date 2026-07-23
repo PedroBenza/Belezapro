@@ -3,6 +3,7 @@
    Conteúdo: Cartão de plano, filtros de clientes, aviso de plano e gráfico
    Linhas originais: 1540-1591
    ==================================================================== */
+
 /* ===== PLANO CARD ===== */
 .plano-card {
   border: 2px solid var(--border-soft);
@@ -55,3 +56,60 @@
   z-index: 9999;
 }
 
+/* ===== FILTRO DO DASHBOARD ===== */
+#dash-filter-icon {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+#dash-filter-icon:active {
+  color: var(--gold);
+}
+#dash-filter-icon svg {
+  stroke: currentColor;
+}
+
+/* ===== BOTTOM SHEET DO FILTRO (modal) ===== */
+#modal-periodo-dashboard .modal-sheet {
+  max-height: 50vh;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.dash-periodo-opcoes {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+.dash-periodo-opcao {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  padding: 13px 6px;
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.dash-periodo-opcao:last-of-type {
+  border-bottom: none;
+}
+.dash-periodo-opcao:active {
+  background: var(--bg-soft);
+}
+.dash-periodo-opcao.active {
+  color: var(--gold-dark);
+  font-weight: 700;
+}
+.dash-periodo-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}

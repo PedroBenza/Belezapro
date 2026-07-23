@@ -8,7 +8,7 @@
 // service worker não mexe nisso, só garante que o ficheiro da app em si
 // carrega offline.
 
-const CACHE_NAME = 'beautypro-shell-v5';
+const CACHE_NAME = 'beautypro-shell-v7'; // v7: Filtro discreto do Dashboard (ícone + Bottom Sheet)
 
 const APP_SHELL = [
   './',
@@ -58,9 +58,6 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // addAll falha se um só pedido falhar; usamos Promise.allSettled
-      // para não deixar um recurso externo instável (ex: CDN lento)
-      // impedir o cache de tudo o resto.
       return Promise.allSettled(
         APP_SHELL.map((url) => cache.add(url).catch(() => null))
       );
@@ -83,14 +80,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Só tratamos pedidos GET — POST/PUT/DELETE (Supabase, Sentry, etc.)
-  // passam sempre direto para a rede, nunca devem ser servidos do cache.
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((respostaCache) => {
-      // Cache-first para o que já temos, com atualização silenciosa em
-      // segundo plano quando há rede (stale-while-revalidate).
       const pedidoRede = fetch(event.request)
         .then((respostaRede) => {
           if (respostaRede && respostaRede.status === 200) {
@@ -99,7 +92,7 @@ self.addEventListener('fetch', (event) => {
           }
           return respostaRede;
         })
-        .catch(() => respostaCache); // sem rede: usa o que estiver em cache
+        .catch(() => respostaCache);
 
       return respostaCache || pedidoRede;
     })
